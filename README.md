@@ -16,6 +16,7 @@ Visualiseur de graphiques de trading desktop, construit avec **PySide6**, **pyqt
   - Signaux avec SL/TP, R:R et score de confluence
   - Affichage flèches / zones / SL / TP sur le graphique
   - Tableau des signaux avec navigation au double-clic
+  - **Analyse IA locale** de chaque signal via Ollama (fenêtre dédiée, choix du modèle)
 - Stratégies personnalisées (dossier `strategies/user_strategies/`)
 - Thème sombre proche de TradingView
 - Crosshair avec informations OHLCV
@@ -46,7 +47,7 @@ python app.py
 ```text
 trading-matrix/
 ├── app.py
-├── core/                  # Configuration, palette
+├── core/                  # Configuration, palette, client Ollama, contexte IA
 ├── data/                  # Client OpenBB/yfinance + données démo
 ├── charts/                # Marqueurs de signaux (flèches, zones, SL/TP)
 ├── indicators/            # Indicateurs techniques + moteur perso
@@ -56,7 +57,7 @@ trading-matrix/
 │   ├── registry.py        # Registre built-in + perso
 │   ├── price_action/      # Structure, patterns, zones, stratégie générale
 │   └── user_strategies/   # Tes stratégies perso
-├── ui/                    # Fenêtre, panneaux, éditeur
+├── ui/                    # Fenêtre, panneaux, éditeur, fenêtre d'analyse IA
 ├── user_indicators/       # Tes indicateurs perso
 ├── utils/
 └── requirements.txt
@@ -85,6 +86,15 @@ Exemple fourni : `example_ema_cross_atr.py`.
 - pandas
 - numpy
 - ta
+- requests (client Ollama pour l'analyse IA)
+
+## Analyse IA (optionnelle)
+
+Les signaux peuvent être analysés par un modèle local via **Ollama**.
+Installer Ollama (<https://ollama.com/download>), lancer `ollama serve` puis
+télécharger un modèle (`ollama pull llama3.1`). Le bouton **Analyser IA** du
+tableau des signaux ouvre une fenêtre dédiée avec le contexte du signal et la
+réponse du modèle. Voir [`doc/analyse-ia.md`](doc/analyse-ia.md).
 
 ## Remarques
 

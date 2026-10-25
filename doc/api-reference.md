@@ -19,6 +19,72 @@ Constantes globales.
 | `DEFAULT_PERIOD` | `str` | `"6mo"` |
 | `PALETTE` | `dict[str, str]` | Couleurs du thème (`bg`, `up`, `down`, `text`...) |
 
+## `core.ollama_client`
+
+Client de l'API locale [Ollama](https://ollama.com) (analyse IA).
+
+```python
+class OllamaError(RuntimeError)
+
+@dataclass
+class OllamaStatus:
+    installed: bool
+    running: bool
+    models: list[str] = []
+    error: str = ""
+    executable: str | None = None
+
+    @property
+    def ready(self) -> bool
+
+def base_url() -> str
+def find_executable() -> str | None
+def fetch_models(timeout: float = 4.0) -> list[str]
+def get_status(timeout: float = 2.5) -> OllamaStatus
+def chat_stream(
+    model: str,
+    messages: list[dict[str, str]],
+    *,
+    temperature: float = 0.3,
+    num_ctx: int = 8192,
+    timeout: tuple[float, float | None] = (5.0, 600.0),
+    stop_event: threading.Event | None = None,
+) -> Iterator[tuple[str, str]]
+```
+
+`chat_stream` diffuse des tuples `(kind, texte)` où `kind` vaut `"content"` ou
+`"thinking"`. L'URL du serveur peut être changée avec `OLLAMA_HOST`.
+
+## `core.signal_context`
+
+Construction du contexte de marché et du prompt d'analyse IA d'un signal.
+
+```python
+SYSTEM_PROMPT: str
+
+@dataclass(frozen=True)
+class AIPrompt:
+    system: str
+    user: str
+    @property
+    def messages(self) -> list[dict[str, str]]
+    def display_text(self) -> str
+
+def find_bar_index(df: pd.DataFrame, timestamp) -> int | None
+def build_signal_prompt(
+    sig: Signal,
+    df: pd.DataFrame,
+    *,
+    symbol: str = "",
+    timeframe: str = "",
+    strategy_name: str = "",
+    strategy_description: str = "",
+    candles: int = 40,
+) -> AIPrompt
+```
+
+Seules les bougies **jusqu'au signal inclus** sont incluses dans le prompt.
+
 ## `data`
 
 ### `OpenBBClient`
@@ -342,12 +408,41 @@ class StrategyPanel(QWidget):
 
 ```python
 class SignalTable(QWidget):
-    signalActivated = Signal(object)  # Signal
+    signalActivated = Signal(object)       # Signal
+    aiAnalysisRequested = Signal(object)   # Signal
     def set_signals(self, signals: list[Signal]) -> None
     def clear(self) -> None
 ```
 
-Colonnes : `Heure, Sens, Setup, Entrée, SL, TP1, TP2, R:R, Conf., Raisons`.
+Colonnes : `Heure, Sens, Setup, Entrée, SL, TP1, TP2, R:R, Conf., Raisons, IA`.
+
+La colonne **IA** contient un bouton `Analyser IA` par ligne ; un clic émet
+`aiAnalysisRequested(signal)`. Les boutons sont replacés après chaque tri du
+tableau.
+
+### `AIAnalysisDialog`
+
+```python
+class AIAnalysisDialog(QWidget):
+    def __init__(
+        self,
+        sig: Signal,
+        df: pd.DataFrame,
+        *,
+        symbol: str = "",
+        timeframe: str = "",
+        strategy_name: str = "",
+        strategy_description: str = "",
+        status: ollama_client.OllamaStatus | None = None,
+        parent=None,
+    )
+```
+
+Fenêtre indépendante : affiche le prompt exact (`prompt_view`), permet de
+choisir le modèle Ollama, diffuse la réponse dans `answer` et propose
+**Arrêter** / **Copier l'analyse**. L'analyse démarre automatiquement si un
+modèle a déjà été utilisé (mémorisé via `QSettings`) ; sinon l'utilisateur
+choisit le modèle puis lance l'analyse.
 
 ### `MainWindow`
 
@@ -357,6 +452,7 @@ class MainWindow(QMainWindow):
     def run_strategy(self, strategy_id, params, filters) -> None
     def clear_signals(self) -> None
     def focus_signal(self, sig) -> None
+    def open_ai_analysis(self, sig) -> None
     def apply_indicators(self, cfg: dict) -> None
     def clear_indicators(self) -> None
     def apply_custom_indicator(self, cid: str, params: dict) -> None
@@ -364,8 +460,12 @@ class MainWindow(QMainWindow):
 ```
 
 Attributs notables : `current_df`, `current_symbol`, `current_interval`,
-`signals`, `client`, `strategy_engine`, `strategy_registry`,
+`signals`, `ai_dialogs`, `client`, `strategy_engine`, `strategy_registry`,
 `custom_registry`.
+
+`open_ai_analysis` vérifie Ollama (installé, démarré, modèles disponibles) et
+affiche une boîte de dialogue explicite sinon ; dans le cas nominal, elle ouvre
+une `AIAnalysisDialog` non modale et la conserve dans `ai_dialogs`.
 
 ## `utils.helpers`
 

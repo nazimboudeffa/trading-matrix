@@ -201,6 +201,63 @@ Le registre n'a pas été découvert. Appeler `registry.discover()` avant
 | Analyse longue | Réduire `lookback_zones`, la période, ou le nombre de stratégies |
 | Démarrage lent | OpenBB initialise ses extensions ; c'est normal au premier lancement |
 
+## Problèmes d'analyse IA (Ollama)
+
+### « Ollama introuvable »
+
+Le binaire `ollama` n'est pas trouvé et l'API locale ne répond pas.
+
+- Installer Ollama : <https://ollama.com/download>
+- Vérifier que `ollama` est dans le `PATH` (rouvrir le terminal après
+  l'installation)
+- Redémarrer l'application
+
+### « Ollama n'est pas démarré »
+
+Ollama est installé mais le service local ne répond pas :
+
+```bash
+ollama serve
+```
+
+Sous Windows/macOS, lancer aussi l'application Ollama. L'API doit répondre sur
+<http://127.0.0.1:11434/api/tags>.
+
+### « Aucun modèle Ollama »
+
+```bash
+ollama pull llama3.1
+ollama list
+```
+
+Puis cliquer sur **Rafraîchir** dans la fenêtre d'analyse.
+
+### `Erreur Ollama (404) : model ... not found`
+
+Le modèle sélectionné a été supprimé depuis l'ouverture de la fenêtre. Cliquer
+sur **Rafraîchir** et choisir un modèle présent dans `ollama list`.
+
+### L'analyse est très lente ou la réponse est vide
+
+- Choisir un modèle plus léger (`llama3.2:3b`, `qwen2.5:3b`)
+- Réduire le nombre de bougies du prompt (`candles` dans
+  `core/signal_context.py`)
+- Vérifier la mémoire disponible : un modèle 30B peut nécessiter beaucoup de RAM
+  ou de VRAM
+- Relancer l'analyse ; les erreurs exactes sont affichées dans la fenêtre
+
+### L'analyse ne démarre pas automatiquement
+
+Vérifier qu'un modèle est sélectionné dans la liste. Sinon, cliquer sur
+**Rafraîchir** puis sur **Analyser avec l'IA**. Vérifier aussi que le champ
+d'environnement `OLLAMA_HOST` ne pointe pas vers un serveur inaccessible.
+
+### Confusion entre signal et conseil financier
+
+L'analyse IA est générative et peut se tromper. Elle est fournie à titre
+éducatif : toujours confronter la réponse aux niveaux du signal et à votre
+propre gestion du risque. Voir [Analyse IA](analyse-ia.md).
+
 ## Réinitialiser complètement l'environnement
 
 ```powershell

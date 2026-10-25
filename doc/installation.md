@@ -7,6 +7,7 @@
 | Python | 3.11 ou supérieur (3.12 recommandé) |
 | Système | Windows, Linux ou macOS |
 | Connexion internet | Nécessaire pour OpenBB/yfinance (sinon données de démo) |
+| Ollama (optionnel) | Analyse IA locale des signaux — voir [Analyse IA](analyse-ia.md) |
 
 > Le projet a été développé et testé sous Windows avec Python 3.12.
 
@@ -78,6 +79,19 @@ Le chargement suit trois tentatives :
 
 Dans le dernier cas, la barre d'état indique `DEMO` et un graphique synthétique
 est affiché : l'interface reste entièrement utilisable.
+
+## Analyse IA locale (optionnel)
+
+L'analyse IA des signaux s'appuie sur **Ollama**, qui n'est pas un paquet
+Python et n'est donc pas dans `requirements.txt`.
+
+1. Installer Ollama : <https://ollama.com/download>
+2. Vérifier le service : `ollama serve`
+3. Télécharger un modèle : `ollama pull llama3.1`
+
+L'application détecte automatiquement le binaire et l'API locale. Aucune
+configuration supplémentaire n'est nécessaire. Voir
+[Analyse IA](analyse-ia.md) pour l'usage et le dépannage.
 
 ## Créer un exécutable (optionnel)
 

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
+    QPushButton,
     QTableWidget,
     QTableWidgetItem,
     QWidget,
@@ -16,8 +17,25 @@ from strategies.base import Signal as TradeSignal
 
 class SignalTable(QWidget):
     signalActivated = Signal(object)  # TradeSignal
+    aiAnalysisRequested = Signal(object)  # TradeSignal
 
-    COLUMNS = ["Heure", "Sens", "Setup", "Entrée", "SL", "TP1", "TP2", "R:R", "Conf.", "Raisons"]
+    COLUMNS = (
+        "Heure",
+        "Sens",
+        "Setup",
+        "Entrée",
+        "SL",
+        "TP1",
+        "TP2",
+        "R:R",
+        "Conf.",
+        "Raisons",
+        "IA",
+    )
+    COL_SIDE = 1
+    COL_CONFIDENCE = 8
+    COL_REASON = 9
+    COL_AI = 10
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -36,12 +54,16 @@ class SignalTable(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.verticalHeader().setVisible(False)
+        self.table.verticalHeader().setDefaultSectionSize(34)
         self.table.setAlternatingRowColors(False)
         self.table.setSortingEnabled(True)
 
         header = self.table.horizontalHeader()
+        header.setStretchLastSection(False)
         header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        header.setStretchLastSection(True)
+        header.setSectionResizeMode(self.COL_REASON, QHeaderView.ResizeMode.Stretch)
+        # Les widgets de cellule ne suivent pas le tri : on les replace après tri.
+        header.sortIndicatorChanged.connect(self._schedule_ai_refresh)
 
         self.table.cellDoubleClicked.connect(self._on_double_click)
         layout.addWidget(self.table)
@@ -71,29 +93,61 @@ class SignalTable(QWidget):
 
             for col, value in enumerate(values):
                 item = QTableWidgetItem(str(value))
-                if col in (1, 8):
+                if col == 0:
+                    # Référence stable : l'item se déplace avec le tri.
+                    item.setData(Qt.ItemDataRole.UserRole, sig)
+                if col in (self.COL_SIDE, self.COL_CONFIDENCE):
                     item.setForeground(color)
-                if col == 1:
+                if col == self.COL_SIDE:
                     font = item.font()
                     font.setBold(True)
                     item.setFont(font)
                 self.table.setItem(row, col, item)
 
         self.table.setSortingEnabled(True)
+        self._refresh_ai_buttons()
+
+    def _schedule_ai_refresh(self, *_args) -> None:
+        """Le tri est appliqué après l'émission du signal : on diffère la mise à jour."""
+        QTimer.singleShot(0, self._refresh_ai_buttons)
+
+    def _refresh_ai_buttons(self, *_args) -> None:
+        """Recrée un bouton IA par ligne (appelé après création et après tri)."""
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 0)
+            sig = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+            if sig is None:
+                continue
+
+            button = QPushButton("Analyser IA")
+            button.setObjectName("aiButton")
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.setToolTip(
+                "Analyser ce signal avec un modèle Ollama local.\n"
+                "Ollama doit être installé et démarré."
+            )
+            button.clicked.connect(
+                lambda _checked=False, signal=sig: self.aiAnalysisRequested.emit(signal)
+            )
+            self.table.setCellWidget(row, self.COL_AI, button)
 
     def clear(self) -> None:
         self.signals = []
         self.table.setRowCount(0)
 
     def _on_double_click(self, row: int, _col: int) -> None:
-        if row < 0 or row >= len(self.signals):
+        if row < 0 or row >= self.table.rowCount():
             return
-        # row index may shift due to sorting: use the item stored on the row
         item = self.table.item(row, 0)
         if item is None:
             return
-        timestamp = item.text()
-        for sig in self.signals:
-            if sig.time.strftime("%Y-%m-%d %H:%M") == timestamp:
-                self.signalActivated.emit(sig)
-                return
+        sig = item.data(Qt.ItemDataRole.UserRole)
+        if sig is None:
+            # Ancien comportement de secours (ne devrait plus arriver).
+            timestamp = item.text()
+            for candidate in self.signals:
+                if candidate.time.strftime("%Y-%m-%d %H:%M") == timestamp:
+                    sig = candidate
+                    break
+        if sig is not None:
+            self.signalActivated.emit(sig)

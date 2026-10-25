@@ -110,11 +110,24 @@ Chaque ligne correspond à un `Signal` :
 | R:R | Ratio risque/rendement calculé |
 | Conf. | Score de confluence (0-100) |
 | Raisons | Détails lisibles (structure, zone, pattern...) |
+| IA | Bouton **Analyser IA** : analyse le signal avec un modèle Ollama local |
 
 Le tableau est **triable** en cliquant sur les en-têtes.
 
 **Double-clic** sur une ligne : le graphique se recentre sur la bougie du signal
 (environ 80 bougies autour).
+
+### Analyse IA d'un signal
+
+Le bouton **Analyser IA** de chaque ligne ouvre une fenêtre séparée dans
+laquelle un modèle Ollama analyse le signal (structure, confluence, risques,
+gestion). L'application vérifie d'abord qu'Ollama est installé et démarré ; un
+message explicite s'affiche sinon. Le modèle se choisit dans la fenêtre et est
+mémorisé pour la prochaine analyse.
+
+Le contexte exact envoyé au modèle est visible, et l'analyse est diffusée en
+direct. Voir [Analyse IA](analyse-ia.md) pour l'installation et le détail du
+prompt.
 
 ## Représentation des signaux sur le graphique
 
@@ -154,3 +167,4 @@ Affiche :
 | `Entrée` dans le champ symbole | Charger |
 | Double-clic sur un signal | Centrer le graphique |
 | Clic sur un en-tête de colonne | Trier le tableau |
+| Clic sur **Analyser IA** | Analyser le signal avec Ollama |

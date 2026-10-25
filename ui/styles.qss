@@ -64,6 +64,46 @@ QPushButton#primaryButton:hover {
     background-color: #1e53e5;
 }
 
+QPushButton#aiButton {
+    background-color: #7e57c2;
+    border: none;
+    color: #ffffff;
+    padding: 2px 8px;
+    font-size: 9pt;
+}
+
+QPushButton#aiButton:hover {
+    background-color: #6a45b0;
+}
+
+QPushButton#aiButton:pressed {
+    background-color: #5c3c97;
+}
+
+QPlainTextEdit, QTextEdit {
+    background-color: #1e222d;
+    color: #d1d4dc;
+    border: 1px solid #363a45;
+    border-radius: 4px;
+    selection-background-color: #2962ff;
+}
+
+QLabel#aiTitle {
+    color: #d1d4dc;
+}
+
+QLabel#aiSubtitle {
+    color: #b2b5be;
+}
+
+QLabel#aiHint {
+    color: #787b86;
+}
+
+QLabel#aiStatus {
+    color: #787b86;
+}
+
 QDockWidget {
     titlebar-close-icon: none;
     titlebar-normal-icon: none;
@@ -114,4 +154,5 @@ QStatusBar {
 
 QSplitter::handle {
     background-color: #363a45;
+    height: 3px;
 }

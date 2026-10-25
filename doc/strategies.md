@@ -60,6 +60,10 @@ class Signal:
 
 Le moteur utilise `meta["rr"]` pour le filtrage R:R.
 
+L'interface ajoute aussi `strategy_id`, `strategy_name`, `symbol` et
+`timeframe` dans `meta` après l'analyse : ces informations servent de contexte
+à l'[analyse IA](analyse-ia.md).
+
 ### `StrategyContext`
 
 ```python

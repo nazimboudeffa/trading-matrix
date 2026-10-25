@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QDockWidget,
     QMainWindow,
@@ -10,12 +11,14 @@ from PySide6.QtWidgets import (
     QStatusBar,
 )
 
+from core import ollama_client
 from core.config import APP_NAME, WINDOW_HEIGHT, WINDOW_WIDTH
 from data.openbb_client import OpenBBClient
 from indicators.custom_registry import CustomRegistry
 from indicators.manager import IndicatorManager
 from strategies.engine import StrategyEngine
 from strategies.registry import StrategyRegistry
+from ui.ai_analysis_dialog import AIAnalysisDialog
 from ui.chart_widget import ChartWidget
 from ui.custom_panel import CustomIndicatorPanel
 from ui.sidebar import IndicatorPanel
@@ -40,6 +43,7 @@ class MainWindow(QMainWindow):
         self.current_df = None
         self.last_cfg = None
         self.signals = []
+        self.ai_dialogs: list[AIAnalysisDialog] = []
 
         self._build_ui()
         self._apply_styles()
@@ -91,6 +95,7 @@ class MainWindow(QMainWindow):
         self.strategy_panel.analyzeRequested.connect(self.run_strategy)
         self.strategy_panel.clearRequested.connect(self.clear_signals)
         self.signal_table.signalActivated.connect(self.focus_signal)
+        self.signal_table.aiAnalysisRequested.connect(self.open_ai_analysis)
 
         self.status = QStatusBar(self)
         self.setStatusBar(self.status)
@@ -143,6 +148,13 @@ class MainWindow(QMainWindow):
             return
 
         self.signals = signals
+        entry = self.strategy_registry.get(strategy_id)
+        strategy_name = entry.name if entry else strategy_id
+        for sig in signals:
+            sig.meta.setdefault("strategy_id", strategy_id)
+            sig.meta.setdefault("strategy_name", strategy_name)
+            sig.meta.setdefault("symbol", self.current_symbol)
+            sig.meta.setdefault("timeframe", self.current_interval)
         self.signal_table.set_signals(signals)
         self.strategy_panel.set_result(len(signals))
 
@@ -150,6 +162,79 @@ class MainWindow(QMainWindow):
 
         draw_signals(self.chart, signals)
         self.status.showMessage(f"{len(signals)} signal(aux) détecté(s)")
+
+    # ------------------------------------------------------------------ IA
+    def open_ai_analysis(self, sig) -> None:
+        """Ouvre une fenêtre d'analyse IA pour le signal, après contrôle d'Ollama."""
+        if self.current_df is None or len(self.current_df) == 0:
+            QMessageBox.information(self, "Info", "Charger des données d'abord.")
+            return
+
+        status = ollama_client.get_status()
+        if not status.installed:
+            QMessageBox.warning(
+                self,
+                "Ollama introuvable",
+                "Ollama n'est pas installé sur cet ordinateur.\n\n"
+                "L'analyse IA locale nécessite Ollama.\n"
+                "1. Téléchargez-le sur https://ollama.com/download\n"
+                "2. Installez-le, puis lancez un modèle : ollama pull llama3.1\n"
+                "3. Redémarrez l'application si Ollama n'est pas détecté.",
+            )
+            return
+        if not status.running:
+            QMessageBox.warning(
+                self,
+                "Ollama n'est pas démarré",
+                "Ollama est installé mais son service ne répond pas.\n\n"
+                "Démarrez-le avec la commande : ollama serve\n"
+                "puis cliquez à nouveau sur « Analyser IA ».",
+            )
+            return
+        if not status.models:
+            QMessageBox.information(
+                self,
+                "Aucun modèle Ollama",
+                "Ollama fonctionne mais aucun modèle n'est installé.\n\n"
+                "Téléchargez un modèle, par exemple :\n"
+                "    ollama pull llama3.1\n"
+                "puis cliquez à nouveau sur « Analyser IA ».",
+            )
+            return
+
+        strategy_id = sig.meta.get("strategy_id") or self.strategy_panel.current_strategy_id()
+        entry = self.strategy_registry.get(strategy_id) if strategy_id else None
+        strategy_name = sig.meta.get("strategy_name") or (entry.name if entry else "")
+        strategy_description = entry.description if entry else ""
+
+        dialog = AIAnalysisDialog(
+            sig,
+            self.current_df,
+            symbol=self.current_symbol,
+            timeframe=self.current_interval,
+            strategy_name=strategy_name,
+            strategy_description=strategy_description,
+            status=status,
+            parent=self,
+        )
+        dialog.destroyed.connect(lambda *_: self._forget_ai_dialog(dialog))
+        self.ai_dialogs.append(dialog)
+
+        geometry = self.frameGeometry()
+        dialog.move(geometry.center() - dialog.rect().center())
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+
+    def _forget_ai_dialog(self, dialog: AIAnalysisDialog) -> None:
+        if dialog in self.ai_dialogs:
+            self.ai_dialogs.remove(dialog)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        # Ferme proprement les analyses en cours (arrêt des threads Ollama).
+        for dialog in list(self.ai_dialogs):
+            dialog.close()
+        super().closeEvent(event)
 
     def clear_signals(self) -> None:
         self.signals = []

@@ -32,6 +32,8 @@ trading-matrix/
 ├── requirements.txt
 ├── core/
 │   ├── config.py             # Constantes, palette, intervalles/périodes
+│   ├── ollama_client.py      # Statut Ollama, modèles, chat en streaming
+│   └── signal_context.py     # Contexte de marché + prompt d'analyse IA
 ├── data/
 │   ├── openbb_client.py      # Chargement OHLCV (OpenBB → yfinance → démo)
 │   └── demo.py               # Générateur de données synthétiques
@@ -61,7 +63,8 @@ trading-matrix/
 │   ├── custom_panel.py       # Panneau indicateurs perso
 │   ├── indicator_editor.py   # Éditeur de code intégré
 │   ├── strategy_panel.py     # Panneau stratégies + filtres
-│   ├── strategy_table.py     # Tableau des signaux
+│   ├── strategy_table.py     # Tableau des signaux + bouton d'analyse IA
+│   ├── ai_analysis_dialog.py # Fenêtre d'analyse IA (Ollama, streaming)
 │   └── styles.qss            # Thème sombre
 ├── user_indicators/          # Indicateurs personnalisés
 ├── utils/helpers.py          # Helpers de conversion
