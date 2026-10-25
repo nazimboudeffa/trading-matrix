@@ -1,0 +1,117 @@
+/* Trading Matrix - Dark Theme */
+QMainWindow {
+    background-color: #131722;
+    color: #d1d4dc;
+}
+
+QToolBar {
+    background-color: #1e222d;
+    border: none;
+    spacing: 6px;
+    padding: 4px;
+}
+
+QLabel {
+    color: #d1d4dc;
+}
+
+QLabel#statusLabel {
+    color: #787b86;
+}
+
+QLineEdit {
+    background-color: #2a2e39;
+    color: #d1d4dc;
+    border: 1px solid #363a45;
+    border-radius: 4px;
+    padding: 4px 6px;
+    selection-background-color: #2962ff;
+}
+
+QComboBox {
+    background-color: #2a2e39;
+    color: #d1d4dc;
+    border: 1px solid #363a45;
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #1e222d;
+    color: #d1d4dc;
+    selection-background-color: #2962ff;
+}
+
+QPushButton {
+    background-color: #2a2e39;
+    color: #d1d4dc;
+    border: 1px solid #363a45;
+    border-radius: 4px;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #363a45;
+}
+
+QPushButton#primaryButton {
+    background-color: #2962ff;
+    border: none;
+    color: #ffffff;
+}
+
+QPushButton#primaryButton:hover {
+    background-color: #1e53e5;
+}
+
+QDockWidget {
+    titlebar-close-icon: none;
+    titlebar-normal-icon: none;
+    color: #d1d4dc;
+}
+
+QDockWidget::title {
+    background-color: #1e222d;
+    padding: 6px;
+    text-align: left;
+}
+
+QScrollArea {
+    background-color: #131722;
+    border: none;
+}
+
+QGroupBox {
+    color: #d1d4dc;
+    border: 1px solid #363a45;
+    border-radius: 4px;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 4px;
+}
+
+QCheckBox {
+    color: #d1d4dc;
+}
+
+QSpinBox, QDoubleSpinBox {
+    background-color: #2a2e39;
+    color: #d1d4dc;
+    border: 1px solid #363a45;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+QStatusBar {
+    background-color: #1e222d;
+    color: #787b86;
+}
+
+QSplitter::handle {
+    background-color: #363a45;
+}

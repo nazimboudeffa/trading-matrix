@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual env
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# App
+cache/
+*.db
+*.sqlite
+logs/
+*.log
+
+# OpenBB
+.openbb/
+.user_settings.json
+
+# Data
+data/*.csv
+!data/.gitkeep
+
+# Custom indicators & strategies (keep examples)
+user_indicators/*.py
+!user_indicators/__init__.py
+!user_indicators/example_cross_ma.py
+strategies/user_strategies/*.py
+!strategies/user_strategies/__init__.py
+!strategies/user_strategies/example_ema_cross_atr.py
