@@ -92,3 +92,18 @@ Exemple fourni : `example_ema_cross_atr.py`.
 - Pour les intervalles intraday, certains symboles/actions peuvent limiter la période.
 - Si `ta-lib` pose problème à l'installation (notamment sous Windows), l'implémentation utilise `ta` en fallback.
 - Si OpenBB/yfinance échoue, l'app bascule sur des données de démo pour tester l'interface.
+
+## AVERTISSEMENT IMPORTANT
+
+> [!WARNING]
+> **PROJET STRICTEMENT EDUCATIF ET EXPERIMENTAL**
+>
+> Ce projet est fourni exclusivement a des fins d'apprentissage, de demonstration technique et d'experimentation. Il ne constitue **en aucun cas** un conseil en investissement, une recommandation financiere, une incitation a acheter ou vendre un actif, ni une promesse de performance.
+>
+> Tout algorithme de trading, aussi convaincant, sophistique ou automatise soit-il, peut produire des signaux faux, tardifs, incoherents ou desastreux dans des conditions de marche reelles. Les marches financiers sont volatils, imprevisibles et peuvent reagir brutalement a des evenements que le modele ne comprend pas, n'anticipe pas ou interprete mal.
+>
+> **Vous pouvez perdre une partie importante de votre capital, voire la totalite de l'argent engage.** Cela inclut les pertes liees aux faux signaux, aux erreurs de parametrage, aux biais de donnees, aux problemes techniques, a la latence, aux conditions de liquidite, au spread, au slippage, a l'effet de levier et a toute defaillance logicielle ou humaine.
+>
+> N'utilisez jamais cet outil avec de l'argent que vous ne pouvez pas vous permettre de perdre integralement. Si vous choisissez de vous en servir dans un contexte reel, vous le faites **a vos seuls risques**, sous votre **entiere responsabilite**.
+>
+> En resume : **ce projet peut vous aider a explorer des idees, pas a securiser votre argent.** Si vous cherchez une garantie, il n'y en a aucune.
