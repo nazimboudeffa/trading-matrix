@@ -15,8 +15,9 @@ Visualiseur de graphiques de trading desktop, construit avec **PySide6**, **pyqt
   - Confirmations Price Action (engulfing, pinbar)
   - Signaux avec SL/TP, R:R et score de confluence
   - Affichage flèches / zones / SL / TP sur le graphique
+  - **Signaux à venir** : setups conditionnels sur Order Blocks non testés, projetés à droite du graphique avec un statut « En attente »
   - Tableau des signaux avec navigation au double-clic
-  - **Analyse IA locale** de chaque signal via Ollama (fenêtre dédiée, choix du modèle)
+  - **Analyse IA locale** de chaque signal (confirmé ou à venir) via Ollama (fenêtre dédiée, choix du modèle)
 - Stratégies personnalisées (dossier `strategies/user_strategies/`)
 - Thème sombre proche de TradingView
 - Crosshair avec informations OHLCV
@@ -94,7 +95,9 @@ Les signaux peuvent être analysés par un modèle local via **Ollama**.
 Installer Ollama (<https://ollama.com/download>), lancer `ollama serve` puis
 télécharger un modèle (`ollama pull llama3.1`). Le bouton **Analyser IA** du
 tableau des signaux ouvre une fenêtre dédiée avec le contexte du signal et la
-réponse du modèle. Voir [`doc/analyse-ia.md`](doc/analyse-ia.md).
+réponse du modèle. Les setups **En attente** peuvent aussi être analysés : le
+prompt indique qu'ils sont conditionnels et demande d'évaluer leur condition de
+déclenchement. Voir [`doc/analyse-ia.md`](doc/analyse-ia.md).
 
 ## Remarques
 

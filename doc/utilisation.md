@@ -101,8 +101,9 @@ Chaque ligne correspond à un `Signal` :
 
 | Colonne | Signification |
 | --- | --- |
-| Heure | Date/heure de la bougie de signal |
+| Heure | Date/heure de la bougie de référence (dernière bougie pour un setup à venir) |
 | Sens | `LONG` ou `SHORT` (coloré) |
+| Statut | `Confirmé` ou **`En attente`** (setup conditionnel) |
 | Setup | Identifiant du type de setup |
 | Entrée | Prix d'entrée proposé |
 | SL | Stop Loss |
@@ -115,7 +116,26 @@ Chaque ligne correspond à un `Signal` :
 Le tableau est **triable** en cliquant sur les en-têtes.
 
 **Double-clic** sur une ligne : le graphique se recentre sur la bougie du signal
-(environ 80 bougies autour).
+(environ 80 bougies autour). Pour un setup **En attente**, le recentrage se fait
+sur la dernière bougie disponible, avec la projection à droite.
+
+### Signaux à venir (statut « En attente »)
+
+La stratégie Price Action peut afficher des **setups conditionnels** sur des
+Order Blocks encore non testés (paramètre **Signaux à venir**). Ils ne sont pas
+déclenchés : la ligne indique la zone, une entrée prévue (limite ou indicative),
+le SL/TP et la condition de déclenchement dans les raisons.
+
+- Sur le graphique : diamant creux ambre et zone pointillée projetés à droite
+  de la dernière bougie.
+- Dans le tableau : statut **En attente** (ambre), confiance plus basse qu'un
+  signal confirmé.
+- Le bouton **Analyser IA** fonctionne aussi : le prompt précise que le setup
+  n'est pas déclenché et demande au modèle d'évaluer la condition.
+
+Un setup peut ne jamais se déclencher, être invalidé si le prix traverse la zone
+sans réaction, ou disparaître au prochain calcul. Voir
+[Stratégie Price Action](strategie-price-action.md).
 
 ### Analyse IA d'un signal
 
@@ -135,7 +155,8 @@ prompt.
 | --- | --- |
 | Signal LONG | Flèche verte vers le haut + label `L <confiance>%` |
 | Signal SHORT | Flèche rouge vers le bas + label `S <confiance>%` |
-| Zone (Order Block) | Bande rectangulaire semi-transparente |
+| Signal à venir | Diamant creux ambre + label `L/S <confiance>% · à venir`, projeté à droite de la dernière bougie |
+| Zone (Order Block) | Bande rectangulaire semi-transparente (pointillée pour un setup à venir) |
 | SL | Ligne pointillée rouge |
 | TP1 | Ligne pointillée verte |
 | TP2 | Ligne pointillée vert clair |

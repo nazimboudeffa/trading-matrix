@@ -22,6 +22,7 @@ class SignalTable(QWidget):
     COLUMNS = (
         "Heure",
         "Sens",
+        "Statut",
         "Setup",
         "Entrée",
         "SL",
@@ -33,9 +34,10 @@ class SignalTable(QWidget):
         "IA",
     )
     COL_SIDE = 1
-    COL_CONFIDENCE = 8
-    COL_REASON = 9
-    COL_AI = 10
+    COL_STATUS = 2
+    COL_CONFIDENCE = 9
+    COL_REASON = 10
+    COL_AI = 11
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -77,10 +79,12 @@ class SignalTable(QWidget):
             is_long = sig.side.value == "LONG"
             color = QColor(PALETTE["up"] if is_long else PALETTE["down"])
             rr = sig.meta.get("rr", "-")
+            pending = bool(sig.meta.get("pending"))
 
             values = [
                 sig.time.strftime("%Y-%m-%d %H:%M"),
                 sig.side.value,
+                "En attente" if pending else "Confirmé",
                 sig.setup_type,
                 f"{sig.entry:.2f}",
                 f"{sig.sl:.2f}",
@@ -96,7 +100,19 @@ class SignalTable(QWidget):
                 if col == 0:
                     # Référence stable : l'item se déplace avec le tri.
                     item.setData(Qt.ItemDataRole.UserRole, sig)
-                if col in (self.COL_SIDE, self.COL_CONFIDENCE):
+                if col == self.COL_STATUS:
+                    item.setForeground(
+                        QColor(PALETTE["pending"] if pending else PALETTE["text_sub"])
+                    )
+                    if pending:
+                        font = item.font()
+                        font.setBold(True)
+                        item.setFont(font)
+                        item.setToolTip(
+                            "Setup conditionnel : il ne se déclenche que si le prix "
+                            "revient dans la zone puis produit une bougie de réaction."
+                        )
+                elif col in (self.COL_SIDE, self.COL_CONFIDENCE):
                     item.setForeground(color)
                 if col == self.COL_SIDE:
                     font = item.font()

@@ -37,4 +37,5 @@ PALETTE = {
     "ma_long": "#9c27b0",
     "bb": "#787b86",
     "cross": "#ffffff",
+    "pending": "#f0b90b",
 }

@@ -146,14 +146,23 @@ class AIAnalysisDialog(QWidget):
 
         entry = self.signal.entry
         tp2 = " · TP2 " + _price(self.signal.tp2) if self.signal.tp2 is not None else ""
+        pending = bool(self.signal.meta.get("pending"))
+        status = "EN ATTENTE" if pending else "Confirmé"
         subtitle = QLabel(
-            f"Signal du {self.signal.time:%Y-%m-%d %H:%M} · {self.signal.setup_type} · "
-            f"Entrée {_price(entry)} · SL {_price(self.signal.sl)} · "
+            f"Signal du {self.signal.time:%Y-%m-%d %H:%M} · {status} · "
+            f"{self.signal.setup_type} · Entrée {_price(entry)} · SL {_price(self.signal.sl)} · "
             f"TP1 {_price(self.signal.tp1)}{tp2} · Confiance {self.signal.confidence} %"
         )
         subtitle.setWordWrap(True)
         subtitle.setObjectName("aiSubtitle")
         layout.addWidget(subtitle)
+
+        if pending:
+            condition = self.signal.meta.get("condition") or "réaction à confirmer dans la zone"
+            condition_label = QLabel(f"Setup conditionnel — {condition}")
+            condition_label.setObjectName("aiPending")
+            condition_label.setWordWrap(True)
+            layout.addWidget(condition_label)
 
         model_row = QHBoxLayout()
         model_row.addWidget(QLabel("Modèle Ollama"))
@@ -177,7 +186,8 @@ class AIAnalysisDialog(QWidget):
         prompt_group = QGroupBox("Contexte envoyé à l'IA")
         prompt_layout = QVBoxLayout(prompt_group)
         prompt_note = QLabel(
-            "Texte exact transmis au modèle (aucune donnée postérieure au signal)."
+            "Texte exact transmis au modèle (aucune donnée future, uniquement les "
+            "bougies disponibles)."
         )
         prompt_note.setObjectName("aiHint")
         prompt_note.setWordWrap(True)

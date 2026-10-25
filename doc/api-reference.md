@@ -190,6 +190,10 @@ class Signal:
     zone_price_high: float | None = None
     meta: dict[str, Any] = {}
 
+# meta d'un signal confirmé : rr, atr
+# meta d'un setup à venir : pending=True, pending_kind ("approche"|"test"),
+#   entry_mode ("limite"|"confirmation"), condition, distance_pct, rr, atr
+
 @dataclass
 class StrategyContext:
     df: pd.DataFrame
@@ -262,9 +266,17 @@ def mitigate_zones(zones, df) -> list[Zone]
 class PriceActionGeneral(BaseStrategy):
     id = "pa_general"
     name = "Price Action Général"
-    params_schema = {...}
+    params_schema = {...}  # swing_left/right, lookback_zones, min_rr,
+                           # min_confidence, require_trend, cooldown,
+                           # show_pending, pending_max,
+                           # pending_max_distance_atr
     def analyze(self, ctx: StrategyContext) -> list[Signal]
+    def _pending_setups(...) -> list[Signal]  # setups conditionnels
 ```
+
+Les setups à venir sont ajoutés à la suite des signaux confirmés et marqués
+`meta["pending"] = True`. Ils ne sont pas des prédictions : voir
+[Stratégie Price Action](strategie-price-action.md).
 
 ### `strategies.registry`
 
@@ -313,7 +325,10 @@ def clear_signal_items(chart: ChartWidget) -> None
 ```
 
 Dessine / supprime flèches, labels, bandes de zone et lignes SL/TP sur le
-graphique principal.
+graphique principal. Les signaux `meta["pending"]` sont représentés par un
+diamant creux ambre, une zone pointillée et des lignes SL/TP projetées dans une
+marge à droite de la dernière bougie ; `draw_signals` étend alors la vue X, et
+`clear_signal_items` la rétablit.
 
 ## `ui`
 
@@ -414,11 +429,15 @@ class SignalTable(QWidget):
     def clear(self) -> None
 ```
 
-Colonnes : `Heure, Sens, Setup, Entrée, SL, TP1, TP2, R:R, Conf., Raisons, IA`.
+Colonnes : `Heure, Sens, Statut, Setup, Entrée, SL, TP1, TP2, R:R, Conf., Raisons, IA`.
 
-La colonne **IA** contient un bouton `Analyser IA` par ligne ; un clic émet
-`aiAnalysisRequested(signal)`. Les boutons sont replacés après chaque tri du
-tableau.
+La colonne **Statut** vaut `Confirmé` ou `En attente` (setup conditionnel,
+`Signal.meta["pending"] = True`). La colonne **IA** contient un bouton
+`Analyser IA` par ligne ; un clic émet `aiAnalysisRequested(signal)`. Les
+boutons sont replacés après chaque tri du tableau.
+
+Constantes : `COL_SIDE=1`, `COL_STATUS=2`, `COL_CONFIDENCE=9`, `COL_REASON=10`,
+`COL_AI=11`.
 
 ### `AIAnalysisDialog`
 

@@ -100,6 +100,11 @@ QLabel#aiHint {
     color: #787b86;
 }
 
+QLabel#aiPending {
+    color: #f0b90b;
+    font-weight: bold;
+}
+
 QLabel#aiStatus {
     color: #787b86;
 }

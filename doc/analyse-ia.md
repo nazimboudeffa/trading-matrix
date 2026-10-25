@@ -6,10 +6,10 @@ local (via [Ollama](https://ollama.com)) analyse le signal : structure de
 marché, confluence, risques, invalidation et gestion du risque.
 
 ```text
-┌────────────── Signaux détectés ─────────────────────────────────────────┐
-│ Heure │ Sens │ Setup │ Entrée │ SL │ TP1 │ TP2 │ R:R │ Conf. │ Raisons │ IA │
-│ ...   │ LONG │ ...   │ ...    │ .. │ ... │ ... │ 1.5 │ 63 %  │ ...     │[Analyser IA]│
-└──────────────────────────────────────────────────────────────────────────┘
+┌────────────── Signaux détectés ─────────────────────────────────────────────┐
+│ Heure │ Sens │ Statut │ Setup │ Entrée │ SL │ TP1 │ TP2 │ R:R │ Conf. │ Raisons │ IA │
+│ ...   │ LONG │ Confirmé │ ...  │ ...    │ .. │ ... │ ... │ 1.5 │ 63 %  │ ...     │[Analyser IA]│
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 1. Prérequis : Ollama
@@ -83,19 +83,25 @@ parallèle.
 Le prompt contient :
 
 - l'identité du signal : symbole, unité de temps, date, sens, setup, stratégie ;
+- le **statut** (`Confirmé` ou `EN ATTENTE`) et, pour un setup à venir, la
+  condition de déclenchement, le mode d'entrée et la distance au prix ;
 - les niveaux : entrée, stop loss, TP1/TP2, distance en %, R:R, zone Order Block ;
 - les raisons calculées par la stratégie et son score de confluence ;
-- les **40 dernières bougies** (OHLCV) **jusqu'à la bougie du signal incluse** ;
+- les **40 dernières bougies** (OHLCV) **jusqu'à la dernière bougie disponible**
+  (ou jusqu'à la bougie du signal pour un signal confirmé) ;
 - des indicateurs de contexte : ATR(14), SMA(20/50/200), plus haut/bas des
   20 dernières bougies, tendance de structure (swings 3/3), anatomie de la
-  bougie de signal ;
+  bougie de référence ;
 - une consigne de travail structurée (verdict, structure, confluence, risques,
-  gestion, points d'attention).
+  gestion, points d'attention). Pour un setup à venir, le travail demande en
+  plus d'évaluer la probabilité d'atteinte de la zone et de reformuler la
+  condition de déclenchement.
 
 > [!IMPORTANT]
-> Aucune bougie **postérieure** au signal n'est transmise : le modèle ne peut pas
-> « tricher » en connaissant la suite du graphique. Il évalue le signal avec
-> l'information disponible à cet instant.
+> Aucune bougie **postérieure** au signal (ou à la dernière bougie disponible)
+> n'est transmise : le modèle ne peut pas « tricher » en connaissant la suite du
+> graphique. Pour un setup **En attente**, il évalue une condition qui n'est pas
+> encore réalisée.
 
 Les données sont envoyées uniquement au serveur Ollama configuré (localhost par
 défaut). Le prompt complet est toujours visible dans la fenêtre avant/après

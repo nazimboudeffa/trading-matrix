@@ -18,6 +18,9 @@ signaux avec stop loss et objectifs.
 | `min_confidence` | int | 50 | 0-100 | Score de confluence minimal |
 | `require_trend` | bool | True | — | Exiger une structure non opposée |
 | `cooldown` | int | 5 | 0-50 | Bougies minimales entre deux signaux |
+| `show_pending` | bool | True | — | Afficher les setups conditionnels à venir |
+| `pending_max` | int | 2 | 0-10 | Nombre maximal de signaux à venir |
+| `pending_max_distance_atr` | float | 4.0 | 0-20 | Distance maximale au prix en ×ATR (0 = pas de limite) |
 
 ## Pipeline
 
@@ -38,7 +41,8 @@ flowchart TD
     K --> L[Score de confluence]
     L --> M{R:R >= min_rr et confiance >= min_conf}
     M -- non --> C
-    M -- oui --> N[Signal]
+    M -- oui --> N[Signal confirmé]
+    N --> O[Setups à venir sur zones non testées]
 ```
 
 ## 1. Structure de marché
@@ -175,17 +179,81 @@ Le signal est rejeté si `R:R < min_rr`.
 Score final borné à **100**. Le signal est rejeté si
 `score < min_confidence`.
 
-## 7. Rendu dans l'application
+## 7. Signaux à venir (setups conditionnels)
 
-Pour chaque signal retenu :
+En plus des signaux confirmés, la stratégie peut proposer des **setups à venir**
+(paramètre `show_pending`, actif par défaut). Ce ne sont **pas des prédictions** :
+ils décrivent un plan conditionnel sur un Order Block encore non testé, à
+proximité du prix courant.
+
+### Sélection
+
+- zone `OB_BULL` ou `OB_BEAR` non touchée entre `zone.index + 2` et
+  l'avant-dernière bougie ;
+- la **dernière bougie** peut être dans la zone : le setup est alors « en cours
+  de test » et attend une bougie de réaction ;
+- prix du bon côté de la zone (au-dessus du bas pour un OB haussier, sous le haut
+  pour un OB baissier) ;
+- tendance non opposée si `require_trend` ;
+- distance au prix ≤ `pending_max_distance_atr × ATR(14)` (0 = pas de limite) ;
+- `R:R ≥ min_rr` et score ≥ `min_confidence` ;
+- zone non déjà utilisée par un signal confirmé ;
+- tri par distance au prix puis par score, limité à `pending_max`.
+
+### Plan conditionnel
+
+| Situation | Entrée | Stop loss |
+| --- | --- | --- |
+| LONG, prix au-dessus de l'OB | limite au haut de la zone (`zone.top`) | `zone.bottom - 0.25 × ATR` |
+| LONG, prix dans l'OB | close courant (indicatif, en attendant la réaction) | `zone.bottom - 0.25 × ATR` |
+| SHORT, prix sous l'OB | limite au bas de la zone (`zone.bottom`) | `zone.top + 0.25 × ATR` |
+| SHORT, prix dans l'OB | close courant (indicatif, en attendant la réaction) | `zone.top + 0.25 × ATR` |
+
+Les objectifs TP1 / TP2 utilisent les swings opposés disponibles, sinon
+`entrée ± 2 × risque` et `entrée ± 3 × risque`.
+
+Chaque setup porte `meta["pending"] = True` et `meta["condition"]`, qui décrit
+précisément la bougie de réaction attendue. **Un setup n'est pas un ordre** :
+tant que la condition n'est pas remplie, il ne doit pas être exécuté. Si le prix
+traverse la zone sans réaction, le setup est invalidé.
+
+### Score des setups à venir
+
+| Critère | Points |
+| --- | --- |
+| Base | 50 |
+| Structure alignée avec le sens | +10 |
+| Marché en range | +3 |
+| Entrée par ordre limite (prix hors zone) | +2 |
+| R:R ≥ 1.5 | +5 |
+
+Score borné à **70** pour rester distinct des signaux confirmés (généralement
+60-100).
+
+## 8. Rendu dans l'application
+
+Pour chaque signal confirmé :
 
 - flèche verte (LONG) ou rouge (SHORT) sur la bougie
 - label `L <score>%` / `S <score>%`
 - bande semi-transparente représentant la zone (12 bougies avant, 18 après)
 - lignes pointillées SL / TP1 / TP2 sur ~25 bougies
-- ligne dans le tableau **Signaux détectés**
+- ligne dans le tableau **Signaux détectés** avec le statut `Confirmé`
 
-## 8. Exemple de signal
+Pour chaque setup à venir :
+
+- diamant creux ambre projeté dans une marge à droite de la dernière bougie
+- label `L <score>% · à venir` / `S <score>% · à venir`
+- bande pointillée prolongée dans la marge future
+- lignes SL / TP1 / TP2 pointillées
+- ligne dans le tableau avec le statut **`En attente`** (texte ambre)
+
+Le tableau possède une colonne **Statut** (`Confirmé` / `En attente`) et le
+bouton **Analyser IA** fonctionne aussi sur les setups conditionnels : le prompt
+précise alors qu'ils ne sont pas déclenchés et demande au modèle d'évaluer la
+condition.
+
+## 9. Exemple de signal
 
 ```text
 2026-05-12  SHORT  entrée 85.04
@@ -197,24 +265,42 @@ Pour chaque signal retenu :
             OB baissier (84.10-86.90) | PA: BEAR_ENGULFING | R:R >= 1.5
 ```
 
-## 9. Limites connues
+Exemple illustratif de setup à venir (aucune bougie de réaction encore) :
+
+```text
+2026-06-02  LONG  EN ATTENTE  OB_PENDING_BULL
+  entrée limite 82.59 | SL 79.96 | TP1 86.22 | TP2 88.50
+  confiance 55 — distance 13.0 % (4.0 × ATR)
+  condition : attendre une bougie de réaction haussière (engulfing ou pinbar)
+              dans la zone 80.12-82.59
+```
+
+## 10. Limites connues
 
 - **Un seul timeframe** analysé à la fois : pas de confluence HTF.
 - **Structure recalculée tous les 5 bougies** : un swing peut être pris en
   compte avec un léger retard.
 - **Order Blocks simplifiés** : pas de Fair Value Gaps, pas de zones de
   liquidité (equal highs/lows), pas de breaker blocks.
-- **Entrée au close** de la bougie de confirmation : pas de gestion d'ordre
-  limite, de spread ni de slippage.
+- **Entrée au close** de la bougie de confirmation pour les signaux confirmés :
+  pas de gestion d'ordre limite, de spread ni de slippage.
+- **Les signaux à venir ne sont pas des prédictions** : ce sont des plans
+  conditionnels. Ils peuvent ne jamais se déclencher, être invalidés par une
+  traversée de zone, ou être trop éloignés du prix (filtre de distance).
+  L'entrée indiquée quand le prix est déjà dans la zone est **indicative** :
+  elle ne doit être utilisée qu'après la bougie de réaction.
+- **Pas de suivi en temps réel** : les setups à venir sont recalculés à chaque
+  exécution de la stratégie sur les données chargées ; ils ne se mettent pas à
+  jour automatiquement à l'arrivée de nouvelles bougies.
 - **TP basés sur les swings disponibles** dans la fenêtre analysée : sur un
   historique court, les objectifs peuvent être éloignés ou repliés sur les
   valeurs par défaut (2R / 3R).
 - **Pas de backtest** : les signaux ne sont pas évalués a posteriori
   (winrate, espérance, drawdown).
 - **Une seule position par zone** : une zone consommée ne régénère pas de
-  signal.
+  signal confirmé.
 
-## 10. Pistes d'amélioration
+## 11. Pistes d'amélioration
 
 1. Ajouter les **zones de liquidité** (égalités de hauts/bas) comme cibles.
 2. Filtrer par **biais HTF** (ex : tendance daily pour des setups 1h).

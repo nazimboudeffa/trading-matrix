@@ -31,6 +31,9 @@ information manque, dis-le explicitement au lieu de l'inventer.
 - N'invente aucun prix, aucune actualité, aucun indicateur et aucune donnée \
 macroéconomique.
 - Sois critique : un signal algorithmique n'est pas une opportunité par défaut.
+- Si le signal est marqué « EN ATTENTE », il s'agit d'un setup conditionnel non \
+déclenché : évalue la probabilité que sa condition se réalise et ne le traite \
+jamais comme une entrée acquise.
 - Raisonne en R (multiples du risque) à partir de l'entrée, du stop loss et des \
 objectifs fournis.
 - Ne modifie pas les niveaux du signal sans expliquer clairement pourquoi.
@@ -160,13 +163,38 @@ def build_signal_prompt(
     timeframe = timeframe or str(sig.meta.get("timeframe") or "")
     strategy_name = strategy_name or str(sig.meta.get("strategy_name") or "")
     index = find_bar_index(df, sig.time)
+    pending = bool(sig.meta.get("pending"))
 
     lines: list[str] = ["## Signal à analyser", ""]
     lines.append(f"- Symbole : {symbol or 'non renseigné'}")
     lines.append(f"- Unité de temps : {timeframe or 'non renseignée'}")
     lines.append(f"- Date / heure du signal : {sig.time:%Y-%m-%d %H:%M}")
+    if pending:
+        lines.append(
+            "- Bougie de référence : dernière bougie disponible — le setup se "
+            "déclencherait sur une bougie ultérieure"
+        )
     lines.append(f"- Sens : {_side_label(sig.side)}")
     lines.append(f"- Type de setup : {sig.setup_type}")
+    if pending:
+        lines.append("- Statut : EN ATTENTE — setup conditionnel, non déclenché")
+        condition = sig.meta.get("condition")
+        if condition:
+            lines.append(f"- Condition de déclenchement : {condition}")
+        entry_mode = sig.meta.get("entry_mode")
+        if entry_mode == "limite":
+            lines.append(
+                "- Entrée prévue : ordre limite dans la zone, si le prix y revient"
+            )
+        elif entry_mode == "confirmation":
+            lines.append(
+                "- Entrée prévue : à la clôture d'une bougie de réaction dans la zone"
+            )
+        distance = _finite(sig.meta.get("distance_pct"))
+        if distance is not None:
+            lines.append(f"- Distance du prix à l'entrée prévue : {distance:.2f} %")
+    else:
+        lines.append("- Statut : signal confirmé (bougie de réaction clôturée)")
     if strategy_name:
         lines.append(f"- Stratégie d'origine : {strategy_name}")
     lines.append(f"- Prix d'entrée : {_price(sig.entry)}")
@@ -203,11 +231,19 @@ def build_signal_prompt(
     else:
         start = max(0, index - max(1, candles) + 1)
         window = df.iloc[start : index + 1]
-        lines.append(
-            f"{len(window)} dernières bougies, jusqu'à la bougie du signal incluse "
-            "(la dernière ligne du tableau correspond au signal). Aucune donnée "
-            "postérieure au signal n'est fournie."
-        )
+        if pending:
+            lines.append(
+                f"{len(window)} dernières bougies, jusqu'à la dernière bougie "
+                "disponible incluse (la dernière ligne du tableau). Le signal est "
+                "conditionnel : aucune donnée future n'est fournie, le déclenchement "
+                "dépendra des bougies à venir."
+            )
+        else:
+            lines.append(
+                f"{len(window)} dernières bougies, jusqu'à la bougie du signal incluse "
+                "(la dernière ligne du tableau correspond au signal). Aucune donnée "
+                "postérieure au signal n'est fournie."
+            )
         lines.append("")
         lines.append("```text")
         lines.append(_candles_table(window))
@@ -265,11 +301,42 @@ def build_signal_prompt(
                 f"mèche basse {lower_wick / total * 100:.0f} %"
             )
 
-    lines.extend(
-        [
-            "",
-            "## Travail demandé",
-            "",
+    if pending:
+        work = [
+            (
+                "1. **Verdict** : ce setup conditionnel est-il pertinent, à surveiller "
+                "ou à écarter ? Donne un niveau de confiance (faible / moyen / élevé) et "
+                "justifie-le."
+            ),
+            (
+                "2. **Lecture de la structure** : décris la tendance, les swings, la "
+                "position du prix par rapport à l'Order Block et la probabilité que le "
+                "prix atteigne la zone d'entrée."
+            ),
+            (
+                "3. **Qualité de la confluence** : évalue l'alignement entre structure, "
+                "zone, type de réaction attendu et ratio risque / rendement."
+            ),
+            (
+                "4. **Risques** : identifie les scénarios défavorables, ce qui invaliderait "
+                "le setup avant même son déclenchement, et le niveau exact à surveiller."
+            ),
+            (
+                "5. **Plan conditionnel** : explique comment placer l'ordre (limite ou "
+                "attente de confirmation), où placer le stop et comment gérer les objectifs."
+            ),
+            (
+                "6. **Points d'attention** : liste ce qu'il faudrait vérifier avant "
+                "d'agir (contexte supérieur, liquidité, news, session...)."
+            ),
+            (
+                "7. **Condition de déclenchement** : reformule précisément ce qui doit se "
+                "passer dans les prochaines bougies pour valider ou annuler le setup, sans "
+                "inventer de données futures."
+            ),
+        ]
+    else:
+        work = [
             (
                 "1. **Verdict** : le signal est-il favorable, à surveiller ou à écarter ? "
                 "Donne un niveau de confiance (faible / moyen / élevé) et justifie-le."
@@ -294,6 +361,14 @@ def build_signal_prompt(
                 "6. **Points d'attention** : liste ce qu'il faudrait vérifier avant "
                 "d'agir (contexte supérieur, liquidité, news, session...)."
             ),
+        ]
+
+    lines.extend(
+        [
+            "",
+            "## Travail demandé",
+            "",
+            *work,
             "",
             (
                 "Termine par une phrase rappelant que cette analyse est éducative et ne "
