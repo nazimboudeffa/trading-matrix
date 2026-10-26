@@ -1,16 +1,15 @@
 # Analyse IA des signaux (Ollama)
 
-Chaque signal du tableau **Signaux détectés** possède une colonne **IA** avec un
-bouton **Analyser IA**. Il ouvre une fenêtre séparée dans laquelle un modèle
-local (via [Ollama](https://ollama.com)) analyse le signal : structure de
-marché, confluence, risques, invalidation et gestion du risque.
+Chaque signal du tableau **Signaux détectés**, confirmé ou **En attente**,
+possède une colonne **IA** avec un bouton **Analyser IA**. Il ouvre une fenêtre
+séparée dans laquelle un modèle local (via [Ollama](https://ollama.com)) analyse
+le signal : structure de marché, confluence, risques, invalidation et gestion du
+risque.
 
-```text
-┌────────────── Signaux détectés ─────────────────────────────────────────────┐
-│ Heure │ Sens │ Statut │ Setup │ Entrée │ SL │ TP1 │ TP2 │ R:R │ Conf. │ Raisons │ IA │
-│ ...   │ LONG │ Confirmé │ ...  │ ...    │ .. │ ... │ ... │ 1.5 │ 63 %  │ ...     │[Analyser IA]│
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+| Heure | Sens | Statut | Setup | Entrée | SL | TP1 | TP2 | R:R | Conf. | Raisons | IA |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ... | LONG | Confirmé | ... | ... | .. | ... | ... | 1.5 | 63 % | ... | [Analyser IA] |
+| ... | SHORT | En attente | ... | ... | .. | ... | ... | 2.0 | 55 % | ... | [Analyser IA] |
 
 ## 1. Prérequis : Ollama
 
@@ -47,7 +46,8 @@ d'environnement `OLLAMA_HOST` (par exemple `http://192.168.1.20:11434`).
 ## 2. Utilisation
 
 1. Charger des données et lancer une stratégie (**Analyser le graphique**).
-2. Dans le tableau des signaux, cliquer sur **Analyser IA** sur la ligne voulue.
+2. Dans le tableau des signaux, cliquer sur **Analyser IA** sur la ligne voulue
+   (y compris une ligne dont le statut est **En attente**).
 3. L'application vérifie Ollama :
    - **Ollama n'est pas installé** → une fenêtre indique qu'Ollama est absent et
      donne les étapes d'installation.
@@ -77,6 +77,15 @@ Dans la fenêtre d'analyse :
 La fenêtre est indépendante : elle peut rester ouverte pendant que l'on continue
 à naviguer dans le graphique. Plusieurs analyses peuvent être ouvertes en
 parallèle.
+
+### Signaux à venir
+
+Un setup **En attente** est un plan conditionnel : la bougie de réaction n'a pas
+encore eu lieu. La fenêtre l'indique dans son sous-titre (`EN ATTENTE`) et
+affiche un bandeau **Setup conditionnel — ...** rappelant la condition exacte à
+remplir. Le prompt demande alors au modèle d'évaluer la probabilité que le prix
+atteigne la zone d'entrée, puis de reformuler la condition de déclenchement, au
+lieu de juger une entrée déjà acquise (voir section 3).
 
 ## 3. Ce qui est envoyé au modèle
 

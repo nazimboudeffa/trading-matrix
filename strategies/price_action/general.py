@@ -65,7 +65,7 @@ class PriceActionGeneral(BaseStrategy):
         zones: list[Zone] = []
         last_signal_side: Side | None = None
         last_signal_idx = -10**9
-        used_zones: set[int] = set()
+        used_zones: set[tuple[float, float]] = set()
 
         for i in range(warmup, n):
             # Recalcul périodique de la structure (pas de lookahead : on tronque à i)
@@ -176,7 +176,7 @@ class PriceActionGeneral(BaseStrategy):
         require_trend: bool,
         max_count: int,
         max_distance_atr: float = 4.0,
-        used_zones: set[int] | None = None,
+        used_zones: set[tuple[float, float]] | None = None,
     ) -> list[Signal]:
         """Setups conditionnels sur des Order Blocks encore non testés.
 
