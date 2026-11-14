@@ -1,6 +1,6 @@
 import pandas as pd
 
-from strategies import utils
+from trading_matrix.strategies import utils
 
 
 def detect_reaction(df: pd.DataFrame, i: int) -> dict:

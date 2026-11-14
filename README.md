@@ -18,7 +18,7 @@ Visualiseur de graphiques de trading desktop, construit avec **PySide6**, **pyqt
   - **Signaux à venir** : setups conditionnels sur Order Blocks non testés, projetés à droite du graphique avec un statut « En attente »
   - Tableau des signaux avec navigation au double-clic
   - **Analyse IA locale** de chaque signal (confirmé ou à venir) via Ollama (fenêtre dédiée, choix du modèle)
-- Stratégies personnalisées (dossier `strategies/user_strategies/`)
+- Stratégies personnalisées (dossier `user_strategies/`)
 - Thème sombre proche de TradingView
 - Crosshair avec informations OHLCV
 - Zoom / Pan
@@ -40,27 +40,30 @@ python -m venv .venv
 pip install -r requirements.txt
 
 # 3) Lancer l'application
-python app.py
+python main.py
 ```
 
 ## Structure
 
 ```text
 trading-matrix/
-├── app.py
-├── core/                  # Configuration, palette, client Ollama, contexte IA
-├── data/                  # Client OpenBB/yfinance + données démo
-├── charts/                # Marqueurs de signaux (flèches, zones, SL/TP)
-├── indicators/            # Indicateurs techniques + moteur perso
-├── strategies/            # Moteur de stratégies
-│   ├── base.py            # Signal, StrategyContext, BaseStrategy
-│   ├── engine.py          # Exécution + filtres
-│   ├── registry.py        # Registre built-in + perso
-│   ├── price_action/      # Structure, patterns, zones, stratégie générale
-│   └── user_strategies/   # Tes stratégies perso
-├── ui/                    # Fenêtre, panneaux, éditeur, fenêtre d'analyse IA
+├── main.py                # Point d'entrée
+├── trading_matrix/        # Code de l'application
+│   ├── core/              # Configuration, palette, client Ollama, contexte IA
+│   ├── data/              # Client OpenBB/yfinance + données démo
+│   ├── charts/            # Marqueurs de signaux (flèches, zones, SL/TP)
+│   ├── indicators/        # Indicateurs techniques + moteur perso
+│   ├── strategies/        # Moteur de stratégies
+│   │   ├── base.py        # Signal, StrategyContext, BaseStrategy
+│   │   ├── engine.py      # Exécution + filtres
+│   │   ├── registry.py    # Registre built-in + perso
+│   │   └── price_action/  # Structure, patterns, zones, stratégie générale
+│   ├── ui/                # Fenêtre, panneaux, éditeur, fenêtre d'analyse IA
+│   └── utils/
 ├── user_indicators/       # Tes indicateurs perso
-├── utils/
+├── user_strategies/       # Tes stratégies perso
+├── doc/                   # Documentation
+├── assets/                # Ressources (icônes)
 └── requirements.txt
 ```
 
@@ -72,9 +75,9 @@ Voir `user_indicators/README.md`.
 
 ## Stratégies personnalisées
 
-Chaque fichier `.py` dans `strategies/user_strategies/` doit définir une classe
+Chaque fichier `.py` dans `user_strategies/` doit définir une classe
 héritant de `BaseStrategy` avec un `id` unique et une méthode
-`analyze(ctx) -> list[Signal]`. Voir `strategies/user_strategies/README.md`.
+`analyze(ctx) -> list[Signal]`. Voir `user_strategies/README.md`.
 
 Exemple fourni : `example_ema_cross_atr.py`.
 

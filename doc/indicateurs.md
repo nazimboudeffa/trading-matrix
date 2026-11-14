@@ -10,7 +10,7 @@ Les deux s'affichent de la même manière : soit **superposés au prix**
 
 ## Indicateurs intégrés
 
-Implémentation : `indicators/manager.py`.
+Implémentation : `trading_matrix/indicators/manager.py`.
 
 | Méthode | Signature | Retour |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ Le `DataFrame` reçu contient :
 #### `IndicatorResult`
 
 ```python
-from indicators.base import IndicatorResult, PlotItem
+from trading_matrix.indicators.base import IndicatorResult, PlotItem
 
 IndicatorResult(
     name="Mon indicateur",
@@ -135,7 +135,7 @@ DESCRIPTION = "Affiche SMA rapide et lente"
 PARAMS = {"fast": 10, "slow": 30}
 
 def compute(df: pd.DataFrame, fast: int = 10, slow: int = 30):
-    from indicators.base import IndicatorResult, PlotItem
+    from trading_matrix.indicators.base import IndicatorResult, PlotItem
     sma_fast = df["Close"].rolling(fast).mean()
     sma_slow = df["Close"].rolling(slow).mean()
     return IndicatorResult(
@@ -158,7 +158,7 @@ DESCRIPTION = "RSI simple avec zones 70/30"
 PARAMS = {"period": 14}
 
 def compute(df: pd.DataFrame, period: int = 14):
-    from indicators.base import IndicatorResult, PlotItem
+    from trading_matrix.indicators.base import IndicatorResult, PlotItem
     delta = df["Close"].diff()
     gain = delta.clip(lower=0).rolling(period).mean()
     loss = (-delta.clip(upper=0)).rolling(period).mean()

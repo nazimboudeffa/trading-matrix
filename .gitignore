@@ -34,6 +34,7 @@ venv.bak/
 # IDE
 .vscode/
 .idea/
+.ruff_cache/
 *.swp
 *.swo
 *~
@@ -54,13 +55,12 @@ logs/
 .user_settings.json
 
 # Data
-data/*.csv
-!data/.gitkeep
+*.csv
 
 # Custom indicators & strategies (keep examples)
 user_indicators/*.py
 !user_indicators/__init__.py
 !user_indicators/example_cross_ma.py
-strategies/user_strategies/*.py
-!strategies/user_strategies/__init__.py
-!strategies/user_strategies/example_ema_cross_atr.py
+user_strategies/*.py
+!user_strategies/__init__.py
+!user_strategies/example_ema_cross_atr.py

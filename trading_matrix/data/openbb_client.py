@@ -16,7 +16,7 @@ except Exception as e:
     logging.warning(f"yfinance not available: {e}")
     _HAS_YF = False
 
-from data.demo import generate_demo
+from trading_matrix.data.demo import generate_demo
 
 
 class OpenBBClient:

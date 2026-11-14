@@ -1,8 +1,8 @@
-# Référence API
+﻿# Référence API
 
 Cette page liste les classes et fonctions principales exposées par le projet.
 
-## `core.config`
+## `trading_matrix.core.config`
 
 Constantes globales.
 
@@ -17,9 +17,13 @@ Constantes globales.
 | `DEFAULT_SYMBOL` | `str` | `"AAPL"` |
 | `DEFAULT_INTERVAL` | `str` | `"1d"` |
 | `DEFAULT_PERIOD` | `str` | `"6mo"` |
+| `PACKAGE_DIR` | `Path` | Dossier du package `trading_matrix/` |
+| `PROJECT_ROOT` | `Path` | Racine du projet (contient `main.py`) |
+| `USER_INDICATORS_DIR` | `Path` | `PROJECT_ROOT/user_indicators` |
+| `USER_STRATEGIES_DIR` | `Path` | `PROJECT_ROOT/user_strategies` |
 | `PALETTE` | `dict[str, str]` | Couleurs du thème (`bg`, `up`, `down`, `text`...) |
 
-## `core.ollama_client`
+## `trading_matrix.core.ollama_client`
 
 Client de l'API locale [Ollama](https://ollama.com) (analyse IA).
 
@@ -55,7 +59,7 @@ def chat_stream(
 `chat_stream` diffuse des tuples `(kind, texte)` où `kind` vaut `"content"` ou
 `"thinking"`. L'URL du serveur peut être changée avec `OLLAMA_HOST`.
 
-## `core.signal_context`
+## `trading_matrix.core.signal_context`
 
 Construction du contexte de marché et du prompt d'analyse IA d'un signal.
 
@@ -99,7 +103,7 @@ class OpenBBClient:
 - `get_ohlcv()` : applique la chaîne OpenBB → yfinance → démo et retourne un
   DataFrame normalisé (`DatetimeIndex`, colonnes OHLCV)
 
-### `data.demo`
+### `trading_matrix.data.demo`
 
 ```python
 def generate_demo(symbol: str = "DEMO", days: int = 200) -> pd.DataFrame
@@ -120,7 +124,7 @@ class IndicatorManager:
     def bollinger(df, period=20, std=2.0, column="Close") -> tuple[Series, Series, Series]
 ```
 
-### `indicators.base`
+### `trading_matrix.indicators.base`
 
 ```python
 @dataclass
@@ -145,7 +149,7 @@ class IndicatorResult:
 
 ```python
 class CustomIndicatorExecutor:
-    def __init__(self, root: str | Path = "user_indicators")
+    def __init__(self, root: str | Path = USER_INDICATORS_DIR)
     def load_module(self, path: Path) -> ModuleType
     def execute(self, mod, df: pd.DataFrame, params: dict | None = None)
 ```
@@ -163,14 +167,14 @@ class CustomIndicator:
     params: dict = {}
 
 class CustomRegistry:
-    def __init__(self, root: str = "user_indicators")
+    def __init__(self, root: str = USER_INDICATORS_DIR)
     def discover(self) -> dict[str, CustomIndicator]
     def compute(self, cid: str, df, params: dict | None = None) -> IndicatorResult
 ```
 
 ## `strategies`
 
-### `strategies.base`
+### `trading_matrix.strategies.base`
 
 ```python
 class Side(Enum): LONG / SHORT / NEUTRAL
@@ -209,7 +213,7 @@ class BaseStrategy:
     def analyze(self, ctx: StrategyContext) -> list[Signal]
 ```
 
-### `strategies.utils`
+### `trading_matrix.strategies.utils`
 
 ```python
 def atr(df, period=14) -> pd.Series
@@ -221,7 +225,7 @@ def is_pinbar_bull(df, i: int, ratio=2.0) -> bool
 def is_pinbar_bear(df, i: int, ratio=2.0) -> bool
 ```
 
-### `strategies.price_action.structure`
+### `trading_matrix.strategies.price_action.structure`
 
 ```python
 @dataclass
@@ -236,14 +240,14 @@ def get_trend(swings) -> Literal["BULLISH", "BEARISH", "RANGE"]
 def detect_bos_choch(df, swings) -> dict
 ```
 
-### `strategies.price_action.patterns`
+### `trading_matrix.strategies.price_action.patterns`
 
 ```python
 def detect_reaction(df, i: int) -> dict
 # {"bull": bool, "bear": bool, "types": list[str]}
 ```
 
-### `strategies.price_action.zones`
+### `trading_matrix.strategies.price_action.zones`
 
 ```python
 @dataclass
@@ -260,7 +264,7 @@ def is_price_in_zone(price, zone) -> bool
 def mitigate_zones(zones, df) -> list[Zone]
 ```
 
-### `strategies.price_action.general`
+### `trading_matrix.strategies.price_action.general`
 
 ```python
 class PriceActionGeneral(BaseStrategy):
@@ -278,7 +282,7 @@ Les setups à venir sont ajoutés à la suite des signaux confirmés et marqués
 `meta["pending"] = True`. Ils ne sont pas des prédictions : voir
 [Stratégie Price Action](strategie-price-action.md).
 
-### `strategies.registry`
+### `trading_matrix.strategies.registry`
 
 ```python
 @dataclass
@@ -292,13 +296,13 @@ class StrategyEntry:
     params_schema: dict
 
 class StrategyRegistry:
-    def __init__(self, user_dir="strategies/user_strategies")
+    def __init__(self, user_dir=USER_STRATEGIES_DIR)
     def discover(self) -> dict[str, StrategyEntry]
     def get(self, sid: str) -> StrategyEntry | None
     def default_params(self, sid: str) -> dict
 ```
 
-### `strategies.engine`
+### `trading_matrix.strategies.engine`
 
 ```python
 class StrategyEngine:
@@ -317,7 +321,7 @@ class StrategyEngine:
 
 Filtres supportés : `side`, `min_confidence`, `min_rr`, `max_signals`.
 
-## `charts.markers`
+## `trading_matrix.charts.markers`
 
 ```python
 def draw_signals(chart: ChartWidget, signals: list[Signal]) -> None
@@ -486,7 +490,7 @@ Attributs notables : `current_df`, `current_symbol`, `current_interval`,
 affiche une boîte de dialogue explicite sinon ; dans le cas nominal, elle ouvre
 une `AIAnalysisDialog` non modale et la conserve dans `ai_dialogs`.
 
-## `utils.helpers`
+## `trading_matrix.utils.helpers`
 
 ```python
 def df_to_candles(df) -> tuple[Index, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray | None]
@@ -497,9 +501,9 @@ Retourne `(dates, opens, highs, lows, closes, volumes)`.
 ## Exemple headless
 
 ```python
-from data.demo import generate_demo
-from strategies.registry import StrategyRegistry
-from strategies.engine import StrategyEngine
+from trading_matrix.data.demo import generate_demo
+from trading_matrix.strategies.registry import StrategyRegistry
+from trading_matrix.strategies.engine import StrategyEngine
 
 df = generate_demo("AAPL", days=300)
 

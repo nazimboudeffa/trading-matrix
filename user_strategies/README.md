@@ -5,7 +5,7 @@ Chaque fichier `.py` de ce dossier est chargé automatiquement dans le panneau *
 ## Contrat
 
 ```python
-from strategies.base import BaseStrategy, Signal, Side, StrategyContext
+from trading_matrix.strategies.base import BaseStrategy, Signal, Side, StrategyContext
 
 class MaStrategie(BaseStrategy):
     id = "mon_id_unique"           # obligatoire, unique
@@ -52,7 +52,7 @@ Signal(
 
 ## Conseils
 
-- Utilise `strategies.utils` (`atr`, `is_bullish_engulfing`, etc.)
-- Réutilise `strategies.price_action.structure` et `zones` si utile
+- Utilise `trading_matrix.strategies.utils` (`atr`, `is_bullish_engulfing`, etc.)
+- Réutilise `trading_matrix.strategies.price_action.structure` et `zones` si utile
 - Évite le *lookahead bias* : ne regarde que `df.iloc[:i+1]` pour la bougie `i`
 - Retourne une liste triée chronologiquement (le moteur retrie de toute façon)

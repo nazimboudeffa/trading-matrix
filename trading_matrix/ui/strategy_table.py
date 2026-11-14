@@ -11,8 +11,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from core.config import PALETTE
-from strategies.base import Signal as TradeSignal
+from trading_matrix.core.config import PALETTE
+from trading_matrix.strategies.base import Signal as TradeSignal
 
 
 class SignalTable(QWidget):

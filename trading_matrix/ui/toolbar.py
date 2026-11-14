@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from core.config import DEFAULT_INTERVAL, DEFAULT_PERIOD, DEFAULT_SYMBOL, INTERVALS, PERIODS
+from trading_matrix.core.config import DEFAULT_INTERVAL, DEFAULT_PERIOD, DEFAULT_SYMBOL, INTERVALS, PERIODS
 
 
 class Toolbar(QWidget):

@@ -21,9 +21,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from core import ollama_client
-from core.signal_context import build_signal_prompt
-from strategies.base import Signal as TradeSignal
+from trading_matrix.core import ollama_client
+from trading_matrix.core.signal_context import build_signal_prompt
+from trading_matrix.strategies.base import Signal as TradeSignal
 
 _SETTINGS_ORG = "TradingMatrix"
 _SETTINGS_APP = "TradingMatrix"

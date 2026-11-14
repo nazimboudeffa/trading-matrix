@@ -1,4 +1,4 @@
-# Stratégies
+﻿# Stratégies
 
 Une stratégie analyse un `DataFrame` OHLCV et retourne une liste de `Signal`.
 Elle est indépendante de l'interface : elle peut être testée en dehors de Qt.
@@ -7,12 +7,12 @@ Elle est indépendante de l'interface : elle peut être testée en dehors de Qt.
 
 | Fichier | Rôle |
 | --- | --- |
-| `strategies/base.py` | `Side`, `Signal`, `StrategyContext`, `BaseStrategy` |
-| `strategies/engine.py` | `StrategyEngine` : exécution + filtres |
-| `strategies/registry.py` | `StrategyRegistry` : découverte built-in + perso |
-| `strategies/utils.py` | ATR, engulfing, pinbar, helpers |
-| `strategies/price_action/` | Modules de la stratégie Price Action |
-| `strategies/user_strategies/` | Stratégies personnalisées |
+| `trading_matrix/strategies/base.py` | `Side`, `Signal`, `StrategyContext`, `BaseStrategy` |
+| `trading_matrix/strategies/engine.py` | `StrategyEngine` : exécution + filtres |
+| `trading_matrix/strategies/registry.py` | `StrategyRegistry` : découverte built-in + perso |
+| `trading_matrix/strategies/utils.py` | ATR, engulfing, pinbar, helpers |
+| `trading_matrix/strategies/price_action/` | Modules de la stratégie Price Action |
+| `user_strategies/` | Stratégies personnalisées |
 
 ## Modèle de données
 
@@ -115,7 +115,7 @@ Clés reconnues : `type`, `default`, `min`, `max`, `step`, `label`.
 `StrategyRegistry` scanne :
 
 1. les stratégies **intégrées** (`_builtin_strategies()`)
-2. les fichiers `.py` de `strategies/user_strategies/` (hors `_*.py`)
+2. les fichiers `.py` de `user_strategies/` (hors `_*.py`)
 
 Pour chaque fichier perso, toutes les classes héritant de `BaseStrategy`
 (autres que `BaseStrategy` elle-même) sont instanciées et enregistrées par
@@ -166,11 +166,11 @@ Les filtres sont **cumulatifs** avec les seuils internes de la stratégie.
 
 ### 1. Créer le fichier
 
-Exemple `strategies/user_strategies/ma_strategie.py` :
+Exemple `user_strategies/ma_strategie.py` :
 
 ```python
-from strategies.base import BaseStrategy, Side, Signal, StrategyContext
-from strategies.utils import atr
+from trading_matrix.strategies.base import BaseStrategy, Side, Signal, StrategyContext
+from trading_matrix.strategies.utils import atr
 
 class MaStrategie(BaseStrategy):
     id = "ma_strategie"
@@ -234,9 +234,9 @@ Sélectionner la stratégie → **Analyser le graphique**.
 - Tester la stratégie hors UI :
 
 ```python
-from data.demo import generate_demo
-from strategies.registry import StrategyRegistry
-from strategies.engine import StrategyEngine
+from trading_matrix.data.demo import generate_demo
+from trading_matrix.strategies.registry import StrategyRegistry
+from trading_matrix.strategies.engine import StrategyEngine
 
 registry = StrategyRegistry(); registry.discover()
 engine = StrategyEngine(registry)
@@ -247,7 +247,7 @@ print(len(signals))
 
 ## Exemple fourni
 
-`strategies/user_strategies/example_ema_cross_atr.py` implémente un croisement
+`user_strategies/example_ema_cross_atr.py` implémente un croisement
 EMA rapide/lente avec SL basé sur l'ATR. Il sert de modèle complet.
 
 ## Limites actuelles

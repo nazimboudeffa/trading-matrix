@@ -7,6 +7,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from trading_matrix.core.config import USER_INDICATORS_DIR
+
 try:
     import ta
 except Exception:
@@ -16,7 +18,7 @@ except Exception:
 class CustomIndicatorExecutor:
     ALLOWED_BUILTINS = {"len": len, "range": range, "min": min, "max": max, "abs": abs, "round": round, "int": int, "float": float, "bool": bool, "enumerate": enumerate, "zip": zip, "sum": sum, "list": list, "dict": dict, "tuple": tuple, "set": set}
 
-    def __init__(self, root: Path | str = "user_indicators"):
+    def __init__(self, root: Path | str = USER_INDICATORS_DIR):
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
 

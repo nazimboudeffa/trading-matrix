@@ -4,8 +4,8 @@ from typing import Any
 
 import pandas as pd
 
-from strategies.base import Side, Signal, StrategyContext
-from strategies.registry import StrategyRegistry
+from trading_matrix.strategies.base import Side, Signal, StrategyContext
+from trading_matrix.strategies.registry import StrategyRegistry
 
 
 class StrategyEngine:

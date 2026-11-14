@@ -1,4 +1,4 @@
-# Documentation — Trading Matrix
+﻿# Documentation — Trading Matrix
 
 Bienvenue dans la documentation du projet **Trading Matrix**, un visualiseur de graphiques de trading desktop écrit en Python.
 
@@ -27,7 +27,7 @@ Trading Matrix repose sur trois briques :
 Le projet est conçu pour être **extensible** :
 
 - `user_indicators/` : ajoute tes propres indicateurs en Python
-- `strategies/user_strategies/` : ajoute tes propres stratégies de trading
+- `user_strategies/` : ajoute tes propres stratégies de trading
 
 Aucune base de données ni serveur n'est nécessaire : tout tourne localement.
 
@@ -37,7 +37,7 @@ Aucune base de données ni serveur n'est nécessaire : tout tourne localement.
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
-python app.py
+python main.py
 ```
 
 Puis, dans l'application :

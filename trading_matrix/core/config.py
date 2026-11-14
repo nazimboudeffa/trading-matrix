@@ -1,4 +1,18 @@
 from dataclasses import dataclass
+from pathlib import Path
+import sys
+
+# Racine du projet et dossiers utilisateur.
+# En mode « frozen » (PyInstaller), la racine est le dossier de l'exécutable.
+if getattr(sys, "frozen", False):
+    PROJECT_ROOT = Path(sys.executable).resolve().parent
+    PACKAGE_DIR = PROJECT_ROOT
+else:
+    PACKAGE_DIR = Path(__file__).resolve().parent.parent      # .../trading_matrix
+    PROJECT_ROOT = PACKAGE_DIR.parent                          # racine du projet
+
+USER_INDICATORS_DIR = PROJECT_ROOT / "user_indicators"
+USER_STRATEGIES_DIR = PROJECT_ROOT / "user_strategies"
 
 APP_NAME = "Trading Matrix"
 WINDOW_WIDTH = 1400

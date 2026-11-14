@@ -1,74 +1,78 @@
-# Architecture
+﻿# Architecture
 
 ## Vue d'ensemble
 
 ```mermaid
 graph TD
-    A[app.py<br/>QApplication] --> B[ui/main_window.py<br/>MainWindow]
-    B --> C[ui/toolbar.py]
-    B --> D[ui/chart_widget.py]
-    B --> E[ui/sidebar.py<br/>indicateurs intégrés]
-    B --> F[ui/custom_panel.py<br/>indicateurs perso]
-    B --> G[ui/strategy_panel.py<br/>stratégies]
-    B --> H[ui/strategy_table.py<br/>signaux]
+    A[main.py] --> B[trading_matrix/app.py<br/>QApplication]
+    B --> C[trading_matrix/ui/main_window.py<br/>MainWindow]
+    C --> D[trading_matrix/ui/toolbar.py]
+    C --> E[trading_matrix/ui/chart_widget.py]
+    C --> F[trading_matrix/ui/sidebar.py<br/>indicateurs intégrés]
+    C --> G[trading_matrix/ui/custom_panel.py<br/>indicateurs perso]
+    C --> H[trading_matrix/ui/strategy_panel.py<br/>stratégies]
+    C --> I[trading_matrix/ui/strategy_table.py<br/>signaux]
 
-    D --> I[charts/markers.py]
-    F --> J[indicators/custom_registry.py]
-    J --> K[indicators/executor.py]
-    G --> L[strategies/registry.py]
-    L --> M[strategies/engine.py]
-    M --> N[strategies/price_action/*]
-    B --> O[data/openbb_client.py]
-    O --> P[OpenBB]
-    O --> Q[yfinance]
-    O --> R[data/demo.py]
+    E --> J[trading_matrix/charts/markers.py]
+    G --> K[trading_matrix/indicators/custom_registry.py]
+    K --> L[trading_matrix/indicators/executor.py]
+    H --> M[trading_matrix/strategies/registry.py]
+    M --> N[trading_matrix/strategies/engine.py]
+    N --> O[trading_matrix/strategies/price_action/*]
+    C --> P[trading_matrix/data/openbb_client.py]
+    P --> Q[OpenBB]
+    P --> R[yfinance]
+    P --> S[trading_matrix/data/demo.py]
 ```
 
 ## Organisation des dossiers
 
 ```text
 trading-matrix/
-├── app.py                    # Point d'entrée
+├── main.py                     # Point d'entrée (python main.py)
 ├── requirements.txt
-├── core/
-│   ├── config.py             # Constantes, palette, intervalles/périodes
-│   ├── ollama_client.py      # Statut Ollama, modèles, chat en streaming
-│   └── signal_context.py     # Contexte de marché + prompt d'analyse IA
-├── data/
-│   ├── openbb_client.py      # Chargement OHLCV (OpenBB → yfinance → démo)
-│   └── demo.py               # Générateur de données synthétiques
-├── charts/
-│   └── markers.py            # Dessin des signaux (flèches, zones, SL/TP)
-├── indicators/
-│   ├── manager.py            # SMA, EMA, RSI, MACD, Bollinger
-│   ├── base.py               # PlotItem, IndicatorResult
-│   ├── executor.py           # Chargement des modules perso
-│   └── custom_registry.py    # Registre des indicateurs perso
-├── strategies/
-│   ├── base.py               # Side, Signal, StrategyContext, BaseStrategy
-│   ├── utils.py              # ATR, patterns élémentaires
-│   ├── registry.py           # Registre built-in + perso
-│   ├── engine.py             # Exécution + filtrage des signaux
-│   ├── price_action/
-│   │   ├── structure.py      # Swings, tendance, BOS/CHOCH
-│   │   ├── patterns.py       # Réactions price action
-│   │   ├── zones.py          # Order Blocks
-│   │   └── general.py        # Stratégie Price Action Général
-│   └── user_strategies/      # Stratégies personnalisées
-├── ui/
-│   ├── main_window.py        # Fenêtre principale + docks
-│   ├── toolbar.py            # Symbole / intervalle / période
-│   ├── chart_widget.py       # Chandeliers, volume, crosshair, sous-graphiques
-│   ├── sidebar.py            # Panneau indicateurs intégrés
-│   ├── custom_panel.py       # Panneau indicateurs perso
-│   ├── indicator_editor.py   # Éditeur de code intégré
-│   ├── strategy_panel.py     # Panneau stratégies + filtres
-│   ├── strategy_table.py     # Tableau des signaux + bouton d'analyse IA
-│   ├── ai_analysis_dialog.py # Fenêtre d'analyse IA (Ollama, streaming)
-│   └── styles.qss            # Thème sombre
-├── user_indicators/          # Indicateurs personnalisés
-├── utils/helpers.py          # Helpers de conversion
-├── doc/                      # Cette documentation
+├── trading_matrix/             # Package de l'application
+│   ├── __init__.py
+│   ├── app.py                  # Création de QApplication + MainWindow
+│   ├── core/
+│   │   ├── config.py           # Constantes, palette, chemins, intervalles/périodes
+│   │   ├── ollama_client.py    # Statut Ollama, modèles, chat en streaming
+│   │   └── signal_context.py   # Contexte de marché + prompt d'analyse IA
+│   ├── data/
+│   │   ├── openbb_client.py    # Chargement OHLCV (OpenBB → yfinance → démo)
+│   │   └── demo.py             # Générateur de données synthétiques
+│   ├── charts/
+│   │   └── markers.py          # Dessin des signaux (flèches, zones, SL/TP)
+│   ├── indicators/
+│   │   ├── manager.py          # SMA, EMA, RSI, MACD, Bollinger
+│   │   ├── base.py             # PlotItem, IndicatorResult
+│   │   ├── executor.py         # Chargement des modules perso
+│   │   └── custom_registry.py  # Registre des indicateurs perso
+│   ├── strategies/
+│   │   ├── base.py             # Side, Signal, StrategyContext, BaseStrategy
+│   │   ├── utils.py            # ATR, patterns élémentaires
+│   │   ├── registry.py         # Registre built-in + perso
+│   │   ├── engine.py           # Exécution + filtrage des signaux
+│   │   └── price_action/
+│   │       ├── structure.py    # Swings, tendance, BOS/CHOCH
+│   │       ├── patterns.py     # Réactions price action
+│   │       ├── zones.py        # Order Blocks
+│   │       └── general.py      # Stratégie Price Action Général
+│   ├── ui/
+│   │   ├── main_window.py      # Fenêtre principale + docks
+│   │   ├── toolbar.py          # Symbole / intervalle / période
+│   │   ├── chart_widget.py     # Chandeliers, volume, crosshair, sous-graphiques
+│   │   ├── sidebar.py          # Panneau indicateurs intégrés
+│   │   ├── custom_panel.py     # Panneau indicateurs perso
+│   │   ├── indicator_editor.py # Éditeur de code intégré
+│   │   ├── strategy_panel.py   # Panneau stratégies + filtres
+│   │   ├── strategy_table.py   # Tableau des signaux + bouton d'analyse IA
+│   │   ├── ai_analysis_dialog.py # Fenêtre d'analyse IA (Ollama, streaming)
+│   │   └── styles.qss          # Thème sombre
+│   └── utils/helpers.py        # Helpers de conversion
+├── user_indicators/            # Indicateurs personnalisés
+├── user_strategies/            # Stratégies personnalisées
+├── doc/                        # Cette documentation
 └── assets/icons/
 ```
 
@@ -134,7 +138,7 @@ CustomIndicatorPanel.applyCustom(id, params)
 - **Séparation UI / logique** : les calculs (indicateurs, stratégies) sont
   indépendants de Qt et testables en dehors de l'interface.
 - **Extensibilité** : les dossiers `user_indicators/` et
-  `strategies/user_strategies/` sont scannés dynamiquement.
+  `user_strategies/` sont scannés dynamiquement.
 
 ## Threads et performances
 

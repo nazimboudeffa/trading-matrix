@@ -1,4 +1,4 @@
-# Installation
+﻿# Installation
 
 ## Prérequis
 
@@ -55,6 +55,7 @@ Contenu principal de `requirements.txt` :
 | `pandas` | Manipulation des données OHLCV |
 | `numpy` | Calculs numériques |
 | `ta` | Indicateurs techniques (fallback si `ta-lib` absent) |
+| `requests` | Client HTTP pour l'API locale Ollama |
 | `pyinstaller` | Génération d'exécutable (optionnel) |
 
 > `ta-lib` n'est pas obligatoire : le projet utilise `ta` et des implémentations
@@ -63,7 +64,7 @@ Contenu principal de `requirements.txt` :
 ## 4. Lancer l'application
 
 ```bash
-python app.py
+python main.py
 ```
 
 Au premier démarrage, OpenBB peut afficher un message concernant l'installation
@@ -96,11 +97,11 @@ configuration supplémentaire n'est nécessaire. Voir
 ## Créer un exécutable (optionnel)
 
 ```bash
-pyinstaller --noconfirm --windowed --name TradingMatrix app.py
+pyinstaller --noconfirm --windowed --name TradingMatrix main.py
 ```
 
 L'exécutable est généré dans `dist/TradingMatrix/`. Les dossiers
-`user_indicators/` et `strategies/user_strategies/` doivent être placés à côté
+`user_indicators/` et `user_strategies/` doivent être placés à côté
 de l'exécutable pour être détectés.
 
 ## Désinstallation

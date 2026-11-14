@@ -11,9 +11,9 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from strategies.base import Side, Signal
-from strategies.price_action.structure import find_swings, get_trend
-from strategies.utils import atr
+from trading_matrix.strategies.base import Side, Signal
+from trading_matrix.strategies.price_action.structure import find_swings, get_trend
+from trading_matrix.strategies.utils import atr
 
 DEFAULT_CANDLES = 40
 

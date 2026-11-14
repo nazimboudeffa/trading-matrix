@@ -1,6 +1,6 @@
 # Stratégie Price Action Général
 
-Implémentation : `strategies/price_action/general.py`
+Implémentation : `trading_matrix/strategies/price_action/general.py`
 Classe : `PriceActionGeneral` (`id = "pa_general"`)
 
 Cette stratégie est le socle fourni par défaut. Elle combine **structure de

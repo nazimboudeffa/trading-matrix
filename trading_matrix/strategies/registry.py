@@ -7,7 +7,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from strategies.base import BaseStrategy
+from trading_matrix.strategies.base import BaseStrategy
+from trading_matrix.core.config import USER_STRATEGIES_DIR
 
 
 @dataclass
@@ -22,7 +23,7 @@ class StrategyEntry:
 
 
 def _builtin_strategies() -> list[BaseStrategy]:
-    from strategies.price_action.general import PriceActionGeneral
+    from trading_matrix.strategies.price_action.general import PriceActionGeneral
 
     return [PriceActionGeneral()]
 
@@ -39,7 +40,7 @@ def _load_user_module(path: Path) -> ModuleType:
 
 
 class StrategyRegistry:
-    def __init__(self, user_dir: str | Path = "strategies/user_strategies"):
+    def __init__(self, user_dir: str | Path = USER_STRATEGIES_DIR):
         self.user_dir = Path(user_dir)
         self.user_dir.mkdir(parents=True, exist_ok=True)
         self.items: dict[str, StrategyEntry] = {}

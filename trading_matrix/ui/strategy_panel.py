@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from strategies.registry import StrategyRegistry
+from trading_matrix.strategies.registry import StrategyRegistry
 
 
 class StrategyPanel(QWidget):

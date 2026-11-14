@@ -11,20 +11,20 @@ from PySide6.QtWidgets import (
     QStatusBar,
 )
 
-from core import ollama_client
-from core.config import APP_NAME, WINDOW_HEIGHT, WINDOW_WIDTH
-from data.openbb_client import OpenBBClient
-from indicators.custom_registry import CustomRegistry
-from indicators.manager import IndicatorManager
-from strategies.engine import StrategyEngine
-from strategies.registry import StrategyRegistry
-from ui.ai_analysis_dialog import AIAnalysisDialog
-from ui.chart_widget import ChartWidget
-from ui.custom_panel import CustomIndicatorPanel
-from ui.sidebar import IndicatorPanel
-from ui.strategy_panel import StrategyPanel
-from ui.strategy_table import SignalTable
-from ui.toolbar import Toolbar
+from trading_matrix.core import ollama_client
+from trading_matrix.core.config import APP_NAME, WINDOW_HEIGHT, WINDOW_WIDTH
+from trading_matrix.data.openbb_client import OpenBBClient
+from trading_matrix.indicators.custom_registry import CustomRegistry
+from trading_matrix.indicators.manager import IndicatorManager
+from trading_matrix.strategies.engine import StrategyEngine
+from trading_matrix.strategies.registry import StrategyRegistry
+from trading_matrix.ui.ai_analysis_dialog import AIAnalysisDialog
+from trading_matrix.ui.chart_widget import ChartWidget
+from trading_matrix.ui.custom_panel import CustomIndicatorPanel
+from trading_matrix.ui.sidebar import IndicatorPanel
+from trading_matrix.ui.strategy_panel import StrategyPanel
+from trading_matrix.ui.strategy_table import SignalTable
+from trading_matrix.ui.toolbar import Toolbar
 
 
 class MainWindow(QMainWindow):
@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
         self.signal_table.set_signals(signals)
         self.strategy_panel.set_result(len(signals))
 
-        from charts.markers import draw_signals
+        from trading_matrix.charts.markers import draw_signals
 
         draw_signals(self.chart, signals)
         self.status.showMessage(f"{len(signals)} signal(aux) détecté(s)")
@@ -239,7 +239,7 @@ class MainWindow(QMainWindow):
     def clear_signals(self) -> None:
         self.signals = []
         self.signal_table.clear()
-        from charts.markers import clear_signal_items
+        from trading_matrix.charts.markers import clear_signal_items
 
         clear_signal_items(self.chart)
         self.status.showMessage("Signaux effacés")

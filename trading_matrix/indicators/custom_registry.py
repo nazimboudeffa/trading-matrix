@@ -2,8 +2,9 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import Any
 
-from indicators.executor import CustomIndicatorExecutor
-from indicators.base import IndicatorResult, PlotItem
+from trading_matrix.indicators.executor import CustomIndicatorExecutor
+from trading_matrix.indicators.base import IndicatorResult, PlotItem
+from trading_matrix.core.config import USER_INDICATORS_DIR
 
 
 @dataclass
@@ -21,7 +22,7 @@ class CustomIndicator:
 
 
 class CustomRegistry:
-    def __init__(self, root: str = "user_indicators"):
+    def __init__(self, root: str = USER_INDICATORS_DIR):
         self.root = Path(root)
         self.executor = CustomIndicatorExecutor(self.root)
         self.items: dict[str, CustomIndicator] = {}

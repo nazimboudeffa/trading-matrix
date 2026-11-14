@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QGraphicsRectItem
 
-from core.config import PALETTE
+from trading_matrix.core.config import PALETTE
 
 
 def clear_signal_items(chart) -> None:

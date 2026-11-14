@@ -109,7 +109,7 @@ l'analyse.
 
 ## 4. Personnalisation du prompt
 
-Le prompt est construit dans `core/signal_context.py` :
+Le prompt est construit dans `trading_matrix/core/signal_context.py` :
 
 - `SYSTEM_PROMPT` : rôle, règles et format de réponse ;
 - `build_signal_prompt(...)` : contexte de marché et travail demandé ;
@@ -118,10 +118,10 @@ Le prompt est construit dans `core/signal_context.py` :
 Pour un prompt plus court (modèles avec petite fenêtre de contexte), réduire
 `candles` ou adapter `SYSTEM_PROMPT`.
 
-Le client Ollama (`core/ollama_client.py`) expose :
+Le client Ollama (`trading_matrix/core/ollama_client.py`) expose :
 
 ```python
-from core import ollama_client
+from trading_matrix.core import ollama_client
 
 status = ollama_client.get_status()
 status.installed, status.running, status.models
@@ -144,7 +144,7 @@ for kind, text in ollama_client.chat_stream("llama3.1", messages):
 
 Le raisonnement complet et les erreurs HTTP sont affichés dans la fenêtre
 d'analyse ; les erreurs non interceptées apparaissent dans le terminal qui a
-lancé `python app.py`.
+lancé `python main.py`.
 
 > [!WARNING]
 > L'analyse IA est **éducative**. Un modèle de langage peut se tromper, inventer

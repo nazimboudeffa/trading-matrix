@@ -11,6 +11,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from trading_matrix.core.config import USER_INDICATORS_DIR
+
 TEMPLATE = '''import pandas as pd
 import numpy as np
 
@@ -19,7 +21,7 @@ DESCRIPTION = "Décris ton indicateur ici"
 PARAMS = {"period": 20}
 
 def compute(df: pd.DataFrame, period: int = 20):
-    from indicators.base import IndicatorResult, PlotItem
+    from trading_matrix.indicators.base import IndicatorResult, PlotItem
 
     ema = df["Close"].ewm(span=period, adjust=False).mean()
 
@@ -36,7 +38,7 @@ class IndicatorEditorDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Éditeur d'indicateur personnalisé")
         self.resize(900, 650)
-        self.root = Path("user_indicators")
+        self.root = Path(USER_INDICATORS_DIR)
         self.root.mkdir(exist_ok=True)
 
         layout = QVBoxLayout(self)

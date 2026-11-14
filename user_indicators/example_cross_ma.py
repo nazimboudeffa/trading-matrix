@@ -6,7 +6,7 @@ PARAMS = {"fast": 10, "slow": 30}
 
 
 def compute(df: pd.DataFrame, fast: int = 10, slow: int = 30):
-    from indicators.base import IndicatorResult, PlotItem
+    from trading_matrix.indicators.base import IndicatorResult, PlotItem
 
     sma_fast = df["Close"].rolling(fast).mean()
     sma_slow = df["Close"].rolling(slow).mean()

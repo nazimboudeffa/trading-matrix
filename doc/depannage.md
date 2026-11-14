@@ -1,4 +1,4 @@
-# Dépannage
+﻿# Dépannage
 
 ## L'application ne démarre pas
 
@@ -20,7 +20,7 @@ python -c "import sys; print(sys.executable)"
 
 ### `ImportError: cannot import name 'XXX' from 'core.config'`
 
-Une constante manque dans `core/config.py`. Les constantes utilisées par
+Une constante manque dans `trading_matrix/core/config.py`. Les constantes utilisées par
 l'interface (`APP_NAME`, `WINDOW_WIDTH`, `WINDOW_HEIGHT`) doivent être définies
 **au niveau module**.
 
@@ -100,7 +100,7 @@ la génération. Ce n'est pas un bug.
 - En cas de doute, relancer avec des données de démo :
 
 ```python
-from data.demo import generate_demo
+from trading_matrix.data.demo import generate_demo
 df = generate_demo("TEST", days=200)
 window.chart.set_data(df)
 ```
@@ -121,7 +121,7 @@ hauteur du graphique principal en déplaçant le séparateur.
 
 ### Les couleurs / le thème ne s'appliquent pas
 
-Le fichier `ui/styles.qss` est chargé au démarrage. Vérifier son encodage
+Le fichier `trading_matrix/ui/styles.qss` est chargé au démarrage. Vérifier son encodage
 UTF-8 et son chemin (`Path(__file__).parent / "styles.qss"`).
 
 ## Problèmes d'indicateurs personnalisés
@@ -156,7 +156,7 @@ exactement ces noms (sensible à la casse).
 
 ### Ma stratégie n'apparaît pas
 
-- Fichier dans `strategies/user_strategies/`
+- Fichier dans `user_strategies/`
 - Classe héritant de `BaseStrategy` (pas de simple fonction)
 - Attribut `id` unique
 - Pas d'erreur d'import (console)
@@ -171,9 +171,9 @@ exactement ces noms (sensible à la casse).
 - Tester hors interface :
 
 ```python
-from data.demo import generate_demo
-from strategies.registry import StrategyRegistry
-from strategies.engine import StrategyEngine
+from trading_matrix.data.demo import generate_demo
+from trading_matrix.strategies.registry import StrategyRegistry
+from trading_matrix.strategies.engine import StrategyEngine
 
 df = generate_demo("TEST", days=500)
 registry = StrategyRegistry(); registry.discover()
@@ -241,7 +241,7 @@ sur **Rafraîchir** et choisir un modèle présent dans `ollama list`.
 
 - Choisir un modèle plus léger (`llama3.2:3b`, `qwen2.5:3b`)
 - Réduire le nombre de bougies du prompt (`candles` dans
-  `core/signal_context.py`)
+  `trading_matrix/core/signal_context.py`)
 - Vérifier la mémoire disponible : un modèle 30B peut nécessiter beaucoup de RAM
   ou de VRAM
 - Relancer l'analyse ; les erreurs exactes sont affichées dans la fenêtre
@@ -265,21 +265,21 @@ Remove-Item -Recurse -Force .venv
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
-python app.py
+python main.py
 ```
 
 ## Obtenir plus d'informations
 
 Les erreurs non interceptées s'affichent dans le terminal qui a lancé
-`python app.py`. Les erreurs de chargement d'indicateurs/stratégies perso y
+`python main.py`. Les erreurs de chargement d'indicateurs/stratégies perso y
 sont également imprimées (`[custom] ...`, `[strategies] ...`).
 
 Pour un test rapide sans interface :
 
 ```python
-from data.demo import generate_demo
-from strategies.registry import StrategyRegistry
-from strategies.engine import StrategyEngine
+from trading_matrix.data.demo import generate_demo
+from trading_matrix.strategies.registry import StrategyRegistry
+from trading_matrix.strategies.engine import StrategyEngine
 
 df = generate_demo("TEST", days=300)
 registry = StrategyRegistry(); registry.discover()

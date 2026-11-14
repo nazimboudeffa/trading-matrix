@@ -7,7 +7,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPicture
 from PySide6.QtWidgets import QSplitter, QVBoxLayout, QWidget
 
-from core.config import PALETTE
+from trading_matrix.core.config import PALETTE
 
 
 class CandlestickItem(pg.GraphicsObject):
@@ -153,7 +153,7 @@ class ChartWidget(QWidget):
         self.n = len(df)
         self.x = np.arange(self.n, dtype=float)
 
-        from charts.markers import clear_signal_items
+        from trading_matrix.charts.markers import clear_signal_items
 
         clear_signal_items(self)
 

@@ -3,11 +3,11 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from strategies.base import BaseStrategy, Side, Signal, StrategyContext
-from strategies.price_action.patterns import detect_reaction
-from strategies.price_action.structure import find_swings, get_trend
-from strategies.price_action.zones import Zone, find_order_blocks
-from strategies.utils import atr
+from trading_matrix.strategies.base import BaseStrategy, Side, Signal, StrategyContext
+from trading_matrix.strategies.price_action.patterns import detect_reaction
+from trading_matrix.strategies.price_action.structure import find_swings, get_trend
+from trading_matrix.strategies.price_action.zones import Zone, find_order_blocks
+from trading_matrix.strategies.utils import atr
 
 
 class PriceActionGeneral(BaseStrategy):

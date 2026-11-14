@@ -9,8 +9,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from indicators.custom_registry import CustomRegistry
-from ui.indicator_editor import IndicatorEditorDialog
+from trading_matrix.indicators.custom_registry import CustomRegistry
+from trading_matrix.ui.indicator_editor import IndicatorEditorDialog
 
 
 class CustomIndicatorPanel(QWidget):

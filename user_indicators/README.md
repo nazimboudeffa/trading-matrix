@@ -13,7 +13,7 @@ DESCRIPTION = "Description courte"
 PARAMS = {"period": 20}
 
 def compute(df: pd.DataFrame, period: int = 20):
-    from indicators.base import IndicatorResult, PlotItem
+    from trading_matrix.indicators.base import IndicatorResult, PlotItem
     ma = df["Close"].rolling(period).mean()
     return IndicatorResult(
         name=f"SMA perso ({period})",

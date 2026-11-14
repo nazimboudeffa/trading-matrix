@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from core.config import PALETTE
+from trading_matrix.core.config import PALETTE
 
 
 class IndicatorPanel(QWidget):

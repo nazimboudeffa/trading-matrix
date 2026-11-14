@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from strategies.base import BaseStrategy, Side, Signal, StrategyContext
-from strategies.utils import atr
+from trading_matrix.strategies.base import BaseStrategy, Side, Signal, StrategyContext
+from trading_matrix.strategies.utils import atr
 
 
 class EmaCrossATR(BaseStrategy):
