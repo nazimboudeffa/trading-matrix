@@ -1,8 +1,9 @@
-"""Panneau « Marchés » : liste des constituants d'un indice.
+"""Panneau « Marchés » : liste des constituants d'un indice ou des paires forex.
 
 Le chargement (cache disque ou Wikipédia) s'exécute dans un thread séparé pour
-ne jamais bloquer l'interface. Un double-clic sur une ligne demande le
-chargement du graphique via le signal ``instrumentActivated``.
+ne jamais bloquer l'interface. Un double-clic sur une ligne — ou le bouton
+« Sélectionner » — demande le chargement du graphique via le signal
+``instrumentActivated``.
 """
 
 from __future__ import annotations
@@ -85,7 +86,7 @@ def _format_age(updated_at: datetime | None) -> str:
 
 
 class MarketsPanel(QWidget):
-    """Combo de marchés, filtre local, tableau triable et bouton Actualiser."""
+    """Combo de marchés, filtre local, tableau triable et actions de chargement."""
 
     instrumentActivated = Signal(str)
 
@@ -166,9 +167,20 @@ class MarketsPanel(QWidget):
         self.count_label = QLabel("")
         self.count_label.setObjectName("marketCount")
         footer.addWidget(self.count_label, 0, Qt.AlignmentFlag.AlignRight)
+
+        self.select_button = QPushButton("Sélectionner")
+        self.select_button.setObjectName("primaryButton")
+        self.select_button.setToolTip("Charger l'actif sélectionné dans le graphique")
+        self.select_button.setEnabled(False)
+        self.select_button.clicked.connect(self._on_select)
+        footer.addWidget(self.select_button, 0, Qt.AlignmentFlag.AlignRight)
         layout.addLayout(footer)
 
         self.filter_input.textChanged.connect(self._apply_filter)
+
+        selection_model = self.table.selectionModel()
+        if selection_model is not None:
+            selection_model.selectionChanged.connect(self._on_selection_changed)
 
     # ------------------------------------------------------------------ Chargement
     def reload(self, force: bool = False) -> None:
@@ -244,16 +256,30 @@ class MarketsPanel(QWidget):
             self.count_label.setText(f"{shown} / {total}")
 
     # ------------------------------------------------------------------ Actions
-    def _on_double_click(self, index) -> None:
-        if not index.isValid():
-            return
+    def _symbol_at(self, index) -> str:
+        """Symbole porté par une ligne du proxy (vide si aucune)."""
+        if index is None or not index.isValid():
+            return ""
         source_index = self.proxy.mapToSource(index)
         item = self.model.item(source_index.row(), 0)
         if item is None:
-            return
-        symbol = str(item.data(Qt.ItemDataRole.UserRole) or item.text()).strip()
+            return ""
+        return str(item.data(Qt.ItemDataRole.UserRole) or item.text()).strip()
+
+    def _on_double_click(self, index) -> None:
+        symbol = self._symbol_at(index)
         if symbol:
             self.instrumentActivated.emit(symbol)
+
+    def _on_select(self) -> None:
+        """Charge l'actif sélectionné (bouton « Sélectionner »)."""
+        symbol = self._symbol_at(self.table.currentIndex())
+        if symbol:
+            self.instrumentActivated.emit(symbol)
+
+    def _on_selection_changed(self, *_) -> None:
+        model = self.table.selectionModel()
+        self.select_button.setEnabled(bool(model and model.hasSelection()))
 
     def _forget_thread(self, thread: _MarketThread) -> None:
         self._threads.discard(thread)

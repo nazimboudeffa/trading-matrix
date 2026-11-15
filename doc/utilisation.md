@@ -105,8 +105,10 @@ double-clic dans la liste le met à jour directement.
   forex.
 - **Filtre** : recherche locale sur le symbole, le nom, le secteur ou la place.
 - **Tableau** triable (Symbole, Nom, Secteur, Place) : un clic sur un en-tête
-  trie, un **double-clic** remplit le champ Symbole et charge le graphique avec
-  l'intervalle et la période courants.
+  trie, un clic sélectionne une ligne.
+- **Sélectionner** : charge l'actif sélectionné dans le graphique avec
+  l'intervalle et la période courants. Un **double-clic** sur une ligne produit
+  le même effet.
 - **Actualiser** : force la récupération depuis Wikipédia (le cache frais est
   ignoré). Sans effet sur le forex, dont les listes sont embarquées.
 - **Statut** en bas : provenance (`Réseau`, `Cache`, `Hors ligne`, `Intégré`),
