@@ -1,4 +1,6 @@
 import logging
+import re
+from datetime import date, timedelta
 
 import pandas as pd
 
@@ -26,6 +28,19 @@ class OpenBBClient:
     def is_available(self) -> bool:
         return (_HAS_OPENBB and self.obb is not None) or _HAS_YF
 
+    @staticmethod
+    def _period_to_start(period: str) -> str | None:
+        """Convertit une période type '6mo', '1y', '30d' en date de départ.
+
+        OpenBB 5 ne prend plus ``period`` mais ``start_date``/``end_date``.
+        """
+        match = re.fullmatch(r"(\d+)\s*(d|wk|mo|y)", str(period).strip().lower())
+        if not match:
+            return None
+        amount, unit = int(match.group(1)), match.group(2)
+        days = {"d": 1, "wk": 7, "mo": 30, "y": 365}[unit] * amount
+        return (date.today() - timedelta(days=days)).isoformat()
+
     def get_ohlcv(self, symbol: str, interval: str = "1d", period: str = "6mo", **kwargs) -> pd.DataFrame:
         """
         Récupère OHLCV.
@@ -35,8 +50,27 @@ class OpenBBClient:
         """
         # 1) Essayer OpenBB (différentes formes selon version)
         if _HAS_OPENBB and self.obb is not None:
+            # OpenBB 5+ : les providers sont des namespaces racine (obb.yfinance.*)
+            provider_ns = getattr(self.obb, "yfinance", None)
+            if provider_ns is not None and hasattr(provider_ns, "equity") and hasattr(
+                provider_ns.equity, "price"
+            ):
+                try:
+                    kwargs_openbb = {
+                        "symbol": symbol,
+                        "interval": interval,
+                        "provider": "yfinance",
+                    }
+                    start_date = self._period_to_start(period)
+                    if start_date:
+                        kwargs_openbb["start_date"] = start_date
+                    res = provider_ns.equity.price.historical(**kwargs_openbb)
+                    return self._normalize(res.to_df())
+                except Exception as e:
+                    logging.debug(f"OpenBB v5 attempt failed: {e}")
+
             try:
-                # Forme courante
+                # Forme OpenBB 4.x (obb.equity.price.historical)
                 if hasattr(self.obb, "equity") and hasattr(self.obb.equity, "price"):
                     try:
                         res = self.obb.equity.price.historical(
