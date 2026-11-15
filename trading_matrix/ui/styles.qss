@@ -64,6 +64,20 @@ QPushButton#primaryButton:hover {
     background-color: #1e53e5;
 }
 
+QPushButton#marketsButton {
+    background-color: #2a2e39;
+    color: #4fc3f7;
+    border: 1px solid #3a5a6b;
+    border-radius: 4px;
+    padding: 5px 10px;
+}
+
+QPushButton#marketsButton:hover {
+    background-color: #363a45;
+    color: #81d4fa;
+    border: 1px solid #4fc3f7;
+}
+
 QPushButton#aiButton {
     background-color: #7e57c2;
     border: none;

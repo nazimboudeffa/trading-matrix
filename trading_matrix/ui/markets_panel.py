@@ -44,6 +44,7 @@ _SOURCE_LABELS = {
     "network": "Réseau",
     "cache": "Cache",
     "seeds": "Hors ligne",
+    "static": "Intégré",
 }
 
 
@@ -105,8 +106,13 @@ class MarketsPanel(QWidget):
         header = QHBoxLayout()
         header.setSpacing(6)
         self.market_combo = QComboBox()
+        previous_category: str | None = None
         for market in list_markets():
+            if previous_category is not None and market.category != previous_category:
+                # Séparateur entre les groupes (Indices / Forex).
+                self.market_combo.insertSeparator(self.market_combo.count())
             self.market_combo.addItem(market.label, market.id)
+            previous_category = market.category
         self.market_combo.currentIndexChanged.connect(lambda _index: self.reload())
         header.addWidget(self.market_combo, 1)
 

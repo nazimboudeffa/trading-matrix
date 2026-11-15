@@ -62,14 +62,21 @@ class MarketDataError(RuntimeError):
 
 @dataclass(frozen=True)
 class Market:
-    """Description d'un marché (indice) et de sa source."""
+    """Description d'un marché et de sa source.
+
+    Un marché est alimenté soit par une page Wikipédia (indices), soit par une
+    liste **statique** embarquée (forex) : dans ce cas ``static_instruments``
+    est renseigné et aucune requête réseau n'est effectuée.
+    """
 
     id: str
     label: str
-    source_url: str
+    source_url: str = ""
     suffix: str = ""
     table_index: int | None = None
     expected_rows: int | None = None
+    category: str = "Indices"
+    static_instruments: tuple[Instrument, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -93,7 +100,7 @@ class MarketSnapshot:
     updated_at: datetime | None = None
 
 
-MARKETS: tuple[Market, ...] = (
+_INDEX_MARKETS: tuple[Market, ...] = (
     Market(
         "cac40",
         "CAC 40",
@@ -148,6 +155,93 @@ MARKETS: tuple[Market, ...] = (
         expected_rows=101,
     ),
 )
+
+
+# ---------------------------------------------------------------------------
+# Forex : listes statiques embarquées (aucune source réseau)
+# ---------------------------------------------------------------------------
+
+_CURRENCY_NAMES: dict[str, str] = {
+    "EUR": "Euro",
+    "USD": "Dollar américain",
+    "JPY": "Yen japonais",
+    "GBP": "Livre sterling",
+    "CHF": "Franc suisse",
+    "CAD": "Dollar canadien",
+    "AUD": "Dollar australien",
+    "NZD": "Dollar néo-zélandais",
+    "SEK": "Couronne suédoise",
+    "NOK": "Couronne norvégienne",
+    "DKK": "Couronne danoise",
+    "PLN": "Zloty polonais",
+    "HUF": "Forint hongrois",
+    "CZK": "Couronne tchèque",
+    "TRY": "Livre turque",
+    "ZAR": "Rand sud-africain",
+    "MXN": "Peso mexicain",
+    "SGD": "Dollar de Singapour",
+    "HKD": "Dollar de Hong Kong",
+    "CNH": "Yuan offshore",
+    "INR": "Roupie indienne",
+    "BRL": "Réal brésilien",
+}
+
+# (identifiant, sous-groupe, paires) — les paires sont séparées par des espaces.
+FOREX_GROUPS: tuple[tuple[str, str, str], ...] = (
+    (
+        "forex_majors",
+        "Majeures",
+        "EURUSD USDJPY GBPUSD USDCHF USDCAD AUDUSD NZDUSD",
+    ),
+    (
+        "forex_minors",
+        "Mineures",
+        "EURGBP EURJPY EURCHF EURAUD EURCAD EURNZD "
+        "GBPJPY GBPCHF GBPAUD GBPCAD GBPNZD "
+        "AUDJPY AUDCHF AUDCAD AUDNZD "
+        "CADJPY CADCHF CHFJPY "
+        "NZDJPY NZDCHF NZDCAD",
+    ),
+    (
+        "forex_exotics",
+        "Exotiques",
+        "USDSEK USDNOK USDDKK USDPLN USDHUF USDCZK USDTRY USDZAR "
+        "USDMXN USDSGD USDHKD USDCNH USDINR USDBRL "
+        "EURTRY EURPLN EURSEK EURNOK EURHUF EURCZK EURZAR "
+        "GBPTRY GBPZAR",
+    ),
+)
+
+
+def _forex_instrument(pair: str, subgroup: str, market_label: str) -> Instrument:
+    """Construit un instrument forex à partir d'un code à 6 lettres."""
+    base, quote = pair[:3], pair[3:6]
+    base_name = _CURRENCY_NAMES.get(base, base)
+    quote_name = _CURRENCY_NAMES.get(quote, quote)
+    return Instrument(
+        symbol=f"{pair}=X",  # convention yfinance (ex. EURUSD=X)
+        name=f"{base}/{quote} — {base_name} / {quote_name}",
+        exchange="Forex",
+        sector=subgroup,
+        market=market_label,
+    )
+
+
+def _forex_market(market_id: str, subgroup: str, pairs: str) -> Market:
+    label = f"Forex · {subgroup}"
+    instruments = tuple(
+        _forex_instrument(pair, subgroup, label) for pair in pairs.split()
+    )
+    return Market(market_id, label, category="Forex", static_instruments=instruments)
+
+
+FOREX_MARKETS: tuple[Market, ...] = tuple(
+    _forex_market(market_id, subgroup, pairs)
+    for market_id, subgroup, pairs in FOREX_GROUPS
+)
+
+#: Catalogue complet : indices (réseau) puis forex (statique).
+MARKETS: tuple[Market, ...] = _INDEX_MARKETS + FOREX_MARKETS
 
 
 def list_markets() -> tuple[Market, ...]:
@@ -365,6 +459,8 @@ def dump_seeds(path: Path | None = None) -> Path:
         "markets": {},
     }
     for market in MARKETS:
+        if market.static_instruments:
+            continue  # le forex est embarqué : rien à télécharger
         try:
             instruments = _fetch_from_network(market)
         except Exception as exc:
@@ -391,8 +487,12 @@ def _fetch_from_network(market: Market) -> list[Instrument]:
 
 
 def fetch_market(market_id: str, force: bool = False) -> MarketSnapshot:
-    """Charge un marché : cache frais, réseau, cache périmé, puis seeds."""
+    """Charge un marché : liste statique, cache frais, réseau, cache périmé, puis seeds."""
     market = get_market(market_id)
+
+    if market.static_instruments:
+        # Forex : liste embarquée, toujours disponible (aucun réseau, pas de cache).
+        return MarketSnapshot(market, list(market.static_instruments), "static", None)
 
     if not force:
         cached = _cache_entry(market.id)
@@ -424,9 +524,16 @@ def fetch_market(market_id: str, force: bool = False) -> MarketSnapshot:
 
 
 def local_universe() -> list[Instrument]:
-    """Univers local (seeds + cache) pour la recherche hors ligne."""
+    """Univers local (forex statique + seeds + cache) pour la recherche hors ligne."""
     instruments: list[Instrument] = []
     seen: set[str] = set()
+
+    # Marchés statiques (forex) : toujours disponibles, même hors ligne.
+    for market in MARKETS:
+        for instrument in market.static_instruments:
+            if instrument.symbol not in seen:
+                seen.add(instrument.symbol)
+                instruments.append(instrument)
 
     seeds = _read_seeds_file().get("markets", {})
     if isinstance(seeds, dict):

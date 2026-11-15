@@ -11,7 +11,8 @@ graph TD
     C --> F[trading_matrix/ui/indicator_panel.py<br/>indicateurs]
     C --> H[trading_matrix/ui/strategy_panel.py<br/>stratégies]
     C --> I[trading_matrix/ui/strategy_table.py<br/>signaux]
-    C --> T[trading_matrix/ui/markets_panel.py<br/>panneau Marchés]
+    C --> T[trading_matrix/ui/markets_window.py<br/>fenêtre Marchés]
+    T --> MP[trading_matrix/ui/markets_panel.py<br/>panneau Marchés]
     C --> SC[trading_matrix/ui/symbol_completer.py<br/>autocomplétion]
 
     E --> J[trading_matrix/charts/markers.py]
@@ -27,6 +28,7 @@ graph TD
     P --> R[yfinance]
     P --> S[trading_matrix/data/demo.py]
     T --> MK[trading_matrix/data/markets.py]
+    MP --> MK
     SC --> SS[trading_matrix/data/symbol_search.py]
     SS --> MK
     SS --> R
@@ -48,7 +50,7 @@ trading-matrix/
 │   │   └── signal_context.py   # Contexte de marché + prompt d'analyse IA
 │   ├── data/
 │   │   ├── openbb_client.py    # Chargement OHLCV (OpenBB → yfinance → démo)
-│   │   ├── markets.py          # Marchés, parsing Wikipédia, cache, seeds
+│   │   ├── markets.py          # Indices (Wikipédia) + forex statique, cache, seeds
 │   │   ├── market_seeds.json   # Instantané embarqué des indices (hors ligne)
 │   │   ├── symbol_search.py    # Recherche d'actifs (yfinance + repli local)
 │   │   └── demo.py             # Générateur de données synthétiques
@@ -69,12 +71,13 @@ trading-matrix/
 │   │       └── zones.py        # Order Blocks
 │   ├── ui/
 │   │   ├── main_window.py      # Fenêtre principale + docks
-│   │   ├── toolbar.py          # Symbole / intervalle / période
+│   │   ├── toolbar.py          # Symbole / intervalle / période + bouton Marchés
 │   │   ├── chart_widget.py     # Chandeliers, volume, crosshair, sous-graphiques
 │   │   ├── indicator_panel.py  # Panneau unique des indicateurs (user_indicators/)
 │   │   ├── indicator_editor.py # Éditeur de code intégré
 │   │   ├── strategy_panel.py   # Panneau stratégies + filtres
 │   │   ├── strategy_table.py   # Tableau des signaux + bouton d'analyse IA
+│   │   ├── markets_window.py   # Fenêtre « Marchés » (non modale)
 │   │   ├── markets_panel.py    # Panneau Marchés (indices, filtre, tri)
 │   │   ├── symbol_completer.py # Autocomplétion du champ Symbole
 │   │   ├── ai_analysis_dialog.py # Fenêtre d'analyse IA (Ollama, streaming)
@@ -129,19 +132,29 @@ SymbolCompleter (champ Symbole)
 Un compteur de génération ignore les réponses arrivées après une frappe plus
 récente. Le champ ne reçoit que le symbole, jamais le libellé affiché.
 
-### Panneau Marchés
+### Fenêtre Marchés
 
 ```text
+Bouton « Marchés » -> MainWindow.open_markets_window() -> MarketsWindow.show()
 MarketsPanel.reload()
    └─ _MarketThread (QThread)
         └─ markets.fetch_market(market_id, force)
+             ├─ 0. liste statique embarquée (forex) -> source « Intégré »
              ├─ 1. cache disque frais (< 7 jours)
              ├─ 2. Wikipédia (requests + pandas.read_html)
              ├─ 3. cache périmé
              └─ 4. market_seeds.json (embarqué)
-   └─ tableau triable + statut (Réseau / Cache / Hors ligne)
+   └─ tableau triable + statut (Réseau / Cache / Hors ligne / Intégré)
    └─ double-clic -> Toolbar.request_load(symbol)
 ```
+
+Le catalogue (`trading_matrix/data/markets.py`) réunit deux natures de marchés :
+les **indices** (constituants récupérés sur Wikipédia puis mis en cache) et le
+**forex** (paires majeures, mineures et exotiques définies directement dans le
+code via `static_instruments`). Les deux passent par la même API
+(`list_markets`, `fetch_market`) et le même tableau : ils sont interchangeables
+côté interface. Les paires forex suivent la convention yfinance (`EURUSD=X`) et
+alimentent aussi la recherche hors ligne (`local_universe`).
 
 ### Indicateurs
 
@@ -188,7 +201,7 @@ Deux accès réseau sont déportés dans des `QThread` pour ne pas geler
 l'interface :
 
 - l'autocomplétion (`symbol_completer.py`) ;
-- le chargement des marchés (`markets_panel.py`).
+- le chargement des marchés (`markets_window.py` / `markets_panel.py`).
 
 Les deux utilisent un compteur de génération : une réponse devenue obsolète
 (frappe ou marché changé entre-temps) est ignorée. À la fermeture, les threads

@@ -2,18 +2,19 @@
 
 ## Interface
 
-L'application s'ouvre sur une fenêtre unique organisée autour de quatre zones :
-le panneau **Marchés** à gauche, le graphique au centre, les docks à droite et le
-tableau des signaux en bas.
+L'application s'ouvre sur une fenêtre organisée autour de trois zones : le
+graphique au centre, les docks **Indicateurs** et **Stratégies** à droite et le
+tableau des signaux en bas. La liste des marchés s'ouvre dans une fenêtre
+séparée via le bouton **Marchés** de la barre d'outils.
 
 ```text
 ┌───────────────────────────────────────────────────────────────┐
-│ Symbole [AAPL]  Intervalle [1d]  Période [6mo]  [Charger]     │  ← barre d'outils
-├──────────────┬────────────────────────────────┬───────────────┤
-│  Marchés     │                                │  Docks :      │
-│  (indices)   │       Graphique (bougies)      │  - Indicateurs│
-│              │                                │  - Stratégies │
-├──────────────┴────────────────────────────────┤               │
+│ [Marchés] Symbole [AAPL]  Intervalle [1d]  Période [6mo]  [Charger] │  ← barre d'outils
+├───────────────────────────────────────────────┬───────────────┤
+│                                               │  Docks :      │
+│              Graphique (bougies)              │  - Indicateurs│
+│                                               │  - Stratégies │
+├───────────────────────────────────────────────┤               │
 │              Volume                           │               │
 ├───────────────────────────────────────────────┤               │
 │   (sous-graphiques : RSI, MACD, indicateurs)  │               │
@@ -32,6 +33,7 @@ tableau des signaux en bas.
 | **Intervalle** | `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `1d`, `1wk`, `1mo` |
 | **Période** | `1d`, `5d`, `1mo`, `3mo`, `6mo`, `1y`, `2y`, `5y`, `max` |
 | **Charger** | Récupère les données et met à jour le graphique |
+| **Marchés** | Ouvre la fenêtre des marchés (indices et forex) |
 | **Statut** | Indique l'état de la source (`OpenBB/yfinance: OK` ou `DEMO`) |
 
 > La disponibilité réelle des combinaisons intervalle/période dépend du provider.
@@ -82,28 +84,40 @@ graphique principal : un zoom sur l'un s'applique aux autres.
 
 ## Panneaux (docks)
 
-Le panneau **Marchés** occupe la gauche de la fenêtre. Les panneaux
-**Indicateurs** et **Stratégies** sont empilés en onglets à droite. Tous peuvent
-être détachés, déplacés ou redimensionnés (comportement Qt standard).
+Les panneaux **Indicateurs** et **Stratégies** sont empilés en onglets à droite.
+Ils peuvent être détachés, déplacés ou redimensionnés (comportement Qt standard).
 
-### Panneau « Marchés » (à gauche)
+### Fenêtre « Marchés »
 
-Liste des constituants des principaux indices :
+Le bouton **Marchés** de la barre d'outils ouvre une fenêtre séparée **non
+modale** contenant les listes d'instruments, réparties en deux familles séparées
+dans le combo : les **indices** et le **forex**. Le graphique reste visible : un
+double-clic dans la liste le met à jour directement.
 
-| Marché | Source |
-| --- | --- |
-| CAC 40, DAX 40, FTSE MIB, FTSE 100, Euro Stoxx 50 | Wikipédia |
-| S&P 500, Nasdaq 100 | Wikipédia |
+| Groupe | Contenu | Source |
+| --- | --- | --- |
+| **Indices** | CAC 40, DAX 40, FTSE MIB, FTSE 100, Euro Stoxx 50, S&P 500, Nasdaq 100 | Wikipédia |
+| **Forex · Majeures** | EUR/USD, USD/JPY, GBP/USD, USD/CHF, USD/CAD, AUD/USD, NZD/USD | Liste embarquée |
+| **Forex · Mineures** | Croisements sans dollar (EUR/GBP, GBP/JPY, AUD/NZD…) | Liste embarquée |
+| **Forex · Exotiques** | Paires avec devises émergentes (USD/TRY, EUR/ZAR…) | Liste embarquée |
 
-- **Combo** en haut : choisit l'indice.
+- **Combo** en haut : choisit le marché ; un séparateur distingue les indices du
+  forex.
 - **Filtre** : recherche locale sur le symbole, le nom, le secteur ou la place.
 - **Tableau** triable (Symbole, Nom, Secteur, Place) : un clic sur un en-tête
   trie, un **double-clic** remplit le champ Symbole et charge le graphique avec
   l'intervalle et la période courants.
 - **Actualiser** : force la récupération depuis Wikipédia (le cache frais est
-  ignoré).
-- **Statut** en bas : provenance (`Réseau`, `Cache`, `Hors ligne`), nombre de
-  titres et âge du cache.
+  ignoré). Sans effet sur le forex, dont les listes sont embarquées.
+- **Statut** en bas : provenance (`Réseau`, `Cache`, `Hors ligne`, `Intégré`),
+  nombre de titres et âge du cache.
+
+Les paires forex suivent la convention yfinance (`EURUSD=X`) : un double-clic
+charge directement la paire correspondante. Elles apparaissent aussi dans
+l'autocomplétion du champ Symbole, même hors ligne.
+
+Fermer la fenêtre ne fait que la masquer : le bouton **Marchés** la réaffiche
+dans son état précédent.
 
 Les listes sont mises en cache **7 jours** dans `cache/markets.json` (ignoré par
 git). Si le réseau échoue, l'application utilise le cache périmé, puis

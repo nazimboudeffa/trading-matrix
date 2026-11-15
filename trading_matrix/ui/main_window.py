@@ -20,7 +20,7 @@ from trading_matrix.strategies.registry import StrategyRegistry
 from trading_matrix.ui.ai_analysis_dialog import AIAnalysisDialog
 from trading_matrix.ui.chart_widget import ChartWidget
 from trading_matrix.ui.indicator_panel import IndicatorPanel
-from trading_matrix.ui.markets_panel import MarketsPanel
+from trading_matrix.ui.markets_window import MarketsWindow
 from trading_matrix.ui.strategy_panel import StrategyPanel
 from trading_matrix.ui.strategy_table import SignalTable
 from trading_matrix.ui.toolbar import Toolbar
@@ -55,19 +55,15 @@ class MainWindow(QMainWindow):
         tb.addWidget(self.toolbar)
         self.addToolBar(tb)
         self.toolbar.loadRequested.connect(self.load_data)
+        self.toolbar.marketsRequested.connect(self.open_markets_window)
 
         self.chart = ChartWidget(self)
         self.setCentralWidget(self.chart)
 
-        self.markets_panel = MarketsPanel(self)
-        dock_markets = QDockWidget("Marchés", self)
-        dock_markets.setAllowedAreas(
-            Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea
-        )
-        dock_markets.setWidget(self.markets_panel)
-        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock_markets)
-        dock_markets.setMinimumWidth(380)
-        self.markets_panel.instrumentActivated.connect(self.toolbar.request_load)
+        # Le panneau Marchés vit dans sa propre fenêtre (non modale) pour ne
+        # pas surcharger la fenêtre principale.
+        self.markets_window = MarketsWindow(self)
+        self.markets_window.instrumentActivated.connect(self.toolbar.request_load)
 
         self.sidebar = IndicatorPanel(self.indicator_registry, self)
         dock = QDockWidget("Indicateurs", self)
@@ -109,6 +105,12 @@ class MainWindow(QMainWindow):
                 self.setStyleSheet(qss_path.read_text(encoding="utf-8"))
             except Exception:
                 pass
+
+    def open_markets_window(self) -> None:
+        """Ouvre (ou ramène au premier plan) la fenêtre des marchés."""
+        self.markets_window.show()
+        self.markets_window.raise_()
+        self.markets_window.activateWindow()
 
     def load_data(self, symbol: str, interval: str, period: str) -> None:
         self.status.showMessage(f"Chargement {symbol} {interval}/{period}...")
@@ -233,7 +235,7 @@ class MainWindow(QMainWindow):
         # Ferme proprement les analyses en cours (arrêt des threads Ollama).
         for dialog in list(self.ai_dialogs):
             dialog.close()
-        self.markets_panel.shutdown()
+        self.markets_window.shutdown()
         self.toolbar.symbol_completer.shutdown()
         super().closeEvent(event)
 

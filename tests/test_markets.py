@@ -282,11 +282,39 @@ def test_local_universe_deduplicates_and_searches(isolated_storage):
 
     universe = markets.local_universe()
     symbols = [instrument.symbol for instrument in universe]
-    assert len(symbols) == 4
-    assert len(symbols) == len(set(symbols))
+    assert len(symbols) == len(set(symbols))  # pas de doublons
+    for expected in ("AIR.PA", "AI.PA", "MC.PA", "TTE.PA"):
+        assert expected in symbols
 
     results = markets.search_local("air", limit=5)
     assert [instrument.symbol for instrument in results] == ["AIR.PA", "AI.PA"]
     assert markets.search_local("lvmh", limit=5)[0].symbol == "MC.PA"
     assert markets.search_local("a") == []
     assert markets.search_local("introuvable") == []
+
+
+# --------------------------------------------------------------------------- forex
+
+def test_forex_markets_are_static_and_offline(isolated_storage, monkeypatch):
+    def boom(market):
+        raise AssertionError("un marché statique ne doit pas appeler le réseau")
+
+    monkeypatch.setattr(markets, "_fetch_from_network", boom)
+
+    snapshot = markets.fetch_market("forex_majors")
+    assert snapshot.source == "static"
+    symbols = [instrument.symbol for instrument in snapshot.instruments]
+    assert "EURUSD=X" in symbols
+    assert all(instrument.exchange == "Forex" for instrument in snapshot.instruments)
+
+    # Les paires forex sont recherchables hors ligne.
+    assert markets.search_local("eurusd")[0].symbol == "EURUSD=X"
+
+
+def test_forex_groups_cover_majors_minors_exotics():
+    ids = {market.id for market in markets.list_markets()}
+    assert {"forex_majors", "forex_minors", "forex_exotics"} <= ids
+    assert all(market.category == "Forex" for market in markets.FOREX_MARKETS)
+
+    majors = markets.get_market("forex_majors")
+    assert len(majors.static_instruments) == 7

@@ -17,6 +17,7 @@ from trading_matrix.ui.symbol_completer import SymbolCompleter
 class Toolbar(QWidget):
     loadRequested = Signal(str, str, str)  # symbol, interval, period
     providerChanged = Signal(str)
+    marketsRequested = Signal()  # ouverture de la fenêtre « Marchés »
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,6 +27,12 @@ class Toolbar(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 8, 12, 8)
         layout.setSpacing(10)
+
+        self.btn_markets = QPushButton("Marchés")
+        self.btn_markets.setObjectName("marketsButton")
+        self.btn_markets.setToolTip("Ouvrir la liste des marchés (indices et forex)")
+        self.btn_markets.clicked.connect(lambda: self.marketsRequested.emit())
+        layout.addWidget(self.btn_markets)
 
         layout.addWidget(QLabel("Symbole"))
         self.symbol_input = QLineEdit(DEFAULT_SYMBOL)
