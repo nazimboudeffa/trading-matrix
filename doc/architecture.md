@@ -12,6 +12,8 @@ graph TD
     C --> G[trading_matrix/ui/custom_panel.py<br/>indicateurs perso]
     C --> H[trading_matrix/ui/strategy_panel.py<br/>stratégies]
     C --> I[trading_matrix/ui/strategy_table.py<br/>signaux]
+    C --> T[trading_matrix/ui/markets_panel.py<br/>panneau Marchés]
+    C --> U[trading_matrix/ui/symbol_completer.py<br/>autocomplétion]
 
     E --> J[trading_matrix/charts/markers.py]
     G --> K[trading_matrix/indicators/custom_registry.py]
@@ -23,6 +25,11 @@ graph TD
     P --> Q[OpenBB]
     P --> R[yfinance]
     P --> S[trading_matrix/data/demo.py]
+    T --> V[trading_matrix/data/markets.py]
+    U --> W[trading_matrix/data/symbol_search.py]
+    W --> V
+    V --> X[Wikipédia + cache + seeds]
+    W --> R
 ```
 
 ## Organisation des dossiers
@@ -40,6 +47,9 @@ trading-matrix/
 │   │   └── signal_context.py   # Contexte de marché + prompt d'analyse IA
 │   ├── data/
 │   │   ├── openbb_client.py    # Chargement OHLCV (OpenBB → yfinance → démo)
+│   │   ├── markets.py          # Marchés, parsing Wikipédia, cache, seeds
+│   │   ├── market_seeds.json   # Instantané embarqué des indices (hors ligne)
+│   │   ├── symbol_search.py    # Recherche d'actifs (yfinance + repli local)
 │   │   └── demo.py             # Générateur de données synthétiques
 │   ├── charts/
 │   │   └── markers.py          # Dessin des signaux (flèches, zones, SL/TP)
@@ -67,9 +77,16 @@ trading-matrix/
 │   │   ├── indicator_editor.py # Éditeur de code intégré
 │   │   ├── strategy_panel.py   # Panneau stratégies + filtres
 │   │   ├── strategy_table.py   # Tableau des signaux + bouton d'analyse IA
+│   │   ├── markets_panel.py    # Panneau Marchés (indices, filtre, tri)
+│   │   ├── symbol_completer.py # Autocomplétion du champ Symbole
 │   │   ├── ai_analysis_dialog.py # Fenêtre d'analyse IA (Ollama, streaming)
 │   │   └── styles.qss          # Thème sombre
 │   └── utils/helpers.py        # Helpers de conversion
+├── tests/                      # Tests pytest (réseau simulé)
+│   ├── fixtures/               # Pages HTML figées
+│   ├── test_markets.py
+│   └── test_symbol_search.py
+├── pytest.ini                  # Configuration pytest (pythonpath)
 ├── user_indicators/            # Indicateurs personnalisés
 ├── user_strategies/            # Stratégies personnalisées
 ├── doc/                        # Cette documentation
@@ -96,6 +113,37 @@ Le DataFrame retourné est normalisé :
 - index `DatetimeIndex` nommé `Date`
 - colonnes `Open`, `High`, `Low`, `Close`, `Volume` (+ `Adj Close` si présent)
 - lignes incomplètes supprimées (`dropna`)
+
+### Autocomplétion du symbole
+
+```text
+SymbolCompleter (champ Symbole)
+   └─ délai 300 ms après la dernière frappe
+        └─ _SearchThread (QThread)
+             └─ symbol_search.search_symbols()
+                  ├─ yfinance.Search (réseau)
+                  └─ markets.search_local() (repli seeds + cache)
+   └─ résultats -> QListWidget flottant (symbole + nom + place)
+   └─ Entrée / double-clic -> Toolbar.request_load(symbol)
+        └─ Toolbar.loadRequested -> MainWindow.load_data()
+```
+
+Un compteur de génération ignore les réponses arrivées après une frappe plus
+récente. Le champ ne reçoit que le symbole, jamais le libellé affiché.
+
+### Panneau Marchés
+
+```text
+MarketsPanel.reload()
+   └─ _MarketThread (QThread)
+        └─ markets.fetch_market(market_id, force)
+             ├─ 1. cache disque frais (< 7 jours)
+             ├─ 2. Wikipédia (requests + pandas.read_html)
+             ├─ 3. cache périmé
+             └─ 4. market_seeds.json (embarqué)
+   └─ tableau triable + statut (Réseau / Cache / Hors ligne)
+   └─ double-clic -> Toolbar.request_load(symbol)
+```
 
 ### Indicateurs
 
@@ -142,11 +190,35 @@ CustomIndicatorPanel.applyCustom(id, params)
 
 ## Threads et performances
 
-Les calculs sont effectués **sur le thread principal** (UI). Pour des jeux de
-données de quelques centaines à quelques milliers de bougies, cela reste fluide.
-Pour des volumes plus importants, il faudra déporter l'analyse dans un
-`QThread` / `QRunnable`.
+Les calculs d'indicateurs et de stratégies sont effectués **sur le thread
+principal** (UI). Pour des jeux de données de quelques centaines à quelques
+milliers de bougies, cela reste fluide.
+
+Deux accès réseau sont déportés dans des `QThread` pour ne pas geler
+l'interface :
+
+- l'autocomplétion (`symbol_completer.py`) ;
+- le chargement des marchés (`markets_panel.py`).
+
+Les deux utilisent un compteur de génération : une réponse devenue obsolète
+(frappe ou marché changé entre-temps) est ignorée. À la fermeture, les threads
+sont interrompus et attendus (`shutdown()`).
 
 La stratégie Price Action recalcule sa structure tous les 5 bougies sur une
 fenêtre tronquée (`df.iloc[:i+1]`) afin d'éviter le *lookahead bias* et de
 limiter le coût de calcul.
+
+## Tests
+
+Les tests couvrent la couche données, sans accès réseau : `yfinance.Search` est
+simulé et le parsing s'appuie sur des pages HTML figées dans
+`tests/fixtures/`.
+
+```bash
+pip install pytest   # outil de développement, absent de requirements.txt
+python -m pytest
+```
+
+`pytest.ini` déclare `testpaths = tests` et ajoute la racine du dépôt au
+`pythonpath`. Cas couverts : normalisation des suffixes, détection de table,
+TTL/cache/seeds, classement par place de cotation, dédoublonnage et repli local.

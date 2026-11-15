@@ -53,6 +53,7 @@ Contenu principal de `requirements.txt` :
 | `openbb` | Plateforme de données financières (API 4.x et 5.x supportées) |
 | `openbb-yfinance` | Provider de données yfinance (branches 1.x et 2.x supportées) |
 | `pandas` | Manipulation des données OHLCV |
+| `lxml` | Parsing des tableaux HTML (listes de marchés) |
 | `numpy` | Calculs numériques |
 | `ta` | Indicateurs techniques (fallback si `ta-lib` absent) |
 | `requests` | Client HTTP pour l'API locale Ollama |
@@ -73,6 +74,9 @@ d'extensions (`Extensions to add: ...`). C'est normal.
 > Le client est compatible **OpenBB 4.x et 5.x** : aucune mise à jour manuelle
 > n'est nécessaire, que `pip` ait installé l'une ou l'autre. Pour vérifier la
 > version en place : `pip show openbb`.
+>
+> Au premier chargement du panneau **Marchés**, un cache est créé dans
+> `cache/markets.json` (ignoré par git) puis réutilisé pendant 7 jours.
 
 ## Comportement en cas d'absence de données
 
