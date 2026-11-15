@@ -64,20 +64,25 @@ extensions. Attendre la fin du message avant de conclure à une erreur.
 
 ### `'App' object has no attribute 'equity'`
 
-L'API OpenBB varie selon les versions et extensions installées. Le client
-contourne cela :
+L'API OpenBB a changé avec la version 5 : les providers sont désormais des
+namespaces racine (`obb.yfinance.equity.price`), alors qu'en 4.x ils passaient
+par `obb.equity.price`. Le client gère les deux :
 
-1. tentative OpenBB si `obb.equity.price` existe
-2. sinon **yfinance** directement
-3. sinon **données de démo**
+1. **OpenBB 5.x** : `obb.yfinance.equity.price.historical(...)`
+2. **OpenBB 4.x** : `obb.equity.price.historical(...)` en repli
+3. sinon **yfinance** directement
+4. sinon **données de démo**
 
-Si tu vois ce message, l'application fonctionne quand même. Pour forcer
-OpenBB, vérifier l'installation :
+Ce message n'est donc plus bloquant, et aucune mise à jour de dépendance n'est
+nécessaire. Pour vérifier la version installée :
 
 ```powershell
-pip install --upgrade openbb openbb-yfinance
+pip show openbb
 python -c "from openbb import obb; print(obb)"
 ```
+
+`requirements.txt` borne OpenBB à `<6` et `openbb-yfinance` à `<3` pour éviter
+qu'une future version majeure ne casse l'application lors d'une réinstallation.
 
 ### Aucune donnée / graphique vide
 

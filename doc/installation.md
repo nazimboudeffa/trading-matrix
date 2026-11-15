@@ -50,8 +50,8 @@ Contenu principal de `requirements.txt` :
 | --- | --- |
 | `PySide6` | Interface graphique Qt |
 | `pyqtgraph` | Rendu des graphiques |
-| `openbb` | Plateforme de données financières |
-| `openbb-yfinance` | Provider de données yfinance |
+| `openbb` | Plateforme de données financières (API 4.x et 5.x supportées) |
+| `openbb-yfinance` | Provider de données yfinance (branches 1.x et 2.x supportées) |
 | `pandas` | Manipulation des données OHLCV |
 | `numpy` | Calculs numériques |
 | `ta` | Indicateurs techniques (fallback si `ta-lib` absent) |
@@ -70,11 +70,16 @@ python main.py
 Au premier démarrage, OpenBB peut afficher un message concernant l'installation
 d'extensions (`Extensions to add: ...`). C'est normal.
 
+> Le client est compatible **OpenBB 4.x et 5.x** : aucune mise à jour manuelle
+> n'est nécessaire, que `pip` ait installé l'une ou l'autre. Pour vérifier la
+> version en place : `pip show openbb`.
+
 ## Comportement en cas d'absence de données
 
 Le chargement suit trois tentatives :
 
-1. **OpenBB** via le provider `yfinance`
+1. **OpenBB** via le provider `yfinance` (API 5.x `obb.yfinance.equity.price`,
+   puis API 4.x `obb.equity.price` en repli)
 2. **yfinance** directement (si OpenBB échoue)
 3. **Données de démonstration** générées localement
 
