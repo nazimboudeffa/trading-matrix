@@ -2,17 +2,19 @@
 
 ## Interface
 
-L'application s'ouvre sur une fenêtre unique organisée autour de trois zones :
+L'application s'ouvre sur une fenêtre unique organisée autour de quatre zones :
+le panneau **Marchés** à gauche, le graphique au centre, les docks à droite et le
+tableau des signaux en bas.
 
 ```text
 ┌───────────────────────────────────────────────────────────────┐
 │ Symbole [AAPL]  Intervalle [1d]  Période [6mo]  [Charger]     │  ← barre d'outils
-├───────────────────────────────────────────────┬───────────────┤
-│                                               │  Docks :      │
-│              Graphique (bougies)              │  - Indicateurs│
-│                                               │  - Mes ind.   │
-│                                               │  - Stratégies │
-├───────────────────────────────────────────────┤               │
+├──────────────┬────────────────────────────────┬───────────────┤
+│  Marchés     │                                │  Docks :      │
+│  (indices)   │       Graphique (bougies)      │  - Indicateurs│
+│              │                                │  - Mes ind.   │
+│              │                                │  - Stratégies │
+├──────────────┴────────────────────────────────┤               │
 │              Volume                           │               │
 ├───────────────────────────────────────────────┤               │
 │   (sous-graphiques : RSI, MACD, indicateurs)  │               │
@@ -27,7 +29,7 @@ L'application s'ouvre sur une fenêtre unique organisée autour de trois zones :
 
 | Élément | Description |
 | --- | --- |
-| **Symbole** | Code du titre (`AAPL`, `MSFT`, `BTC-USD`...). `Entrée` déclenche le chargement. |
+| **Symbole** | Code du titre (`AAPL`, `MSFT`, `BTC-USD`...). Une liste de suggestions s'ouvre dès 2 caractères ; `Entrée` déclenche le chargement. |
 | **Intervalle** | `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `1d`, `1wk`, `1mo` |
 | **Période** | `1d`, `5d`, `1mo`, `3mo`, `6mo`, `1y`, `2y`, `5y`, `max` |
 | **Charger** | Récupère les données et met à jour le graphique |
@@ -35,6 +37,28 @@ L'application s'ouvre sur une fenêtre unique organisée autour de trois zones :
 
 > La disponibilité réelle des combinaisons intervalle/période dépend du provider.
 > Par exemple, les données intraday sont souvent limitées à quelques jours.
+
+### Autocomplétion du symbole
+
+Dès **2 caractères** saisis, une liste de suggestions apparaît sous le champ
+après un court délai (300 ms). Chaque ligne affiche le symbole, le nom et la
+place de cotation (`AIR.PA   Airbus SE (Paris)`). Seul le **symbole** est inséré
+dans le champ ; le nom n'est qu'indicatif.
+
+| Action | Effet |
+| --- | --- |
+| Saisie (2 caractères minimum) | Recherche réseau après 300 ms |
+| `↑` / `↓` | Navigue dans les suggestions |
+| `Entrée` | Insère le symbole et charge le graphique |
+| `Tab` | Insère le symbole sans charger |
+| `Échap` | Ferme la liste |
+| Clic simple | Insère le symbole sans charger |
+| Double-clic | Insère le symbole et charge |
+
+La recherche passe par `yfinance` et privilégie les places principales (Paris,
+XETRA, Londres, Milan, Amsterdam, NYSE, Nasdaq, Suisse) devant les cotations
+secondaires et le marché de gré à gré. Hors ligne, l'application se rabat sur les
+listes de marchés embarquées.
 
 ## Graphique
 
@@ -59,8 +83,34 @@ graphique principal : un zoom sur l'un s'applique aux autres.
 
 ## Panneaux (docks)
 
-Les trois panneaux sont empilés en onglets à droite et peuvent être détachés,
-déplacés ou redimensionnés (comportement Qt standard).
+Le panneau **Marchés** occupe la gauche de la fenêtre. Les panneaux
+**Indicateurs**, **Mes indicateurs** et **Stratégies** sont empilés en onglets à
+droite. Tous peuvent être détachés, déplacés ou redimensionnés (comportement Qt
+standard).
+
+### Panneau « Marchés » (à gauche)
+
+Liste des constituants des principaux indices :
+
+| Marché | Source |
+| --- | --- |
+| CAC 40, DAX 40, FTSE MIB, FTSE 100, Euro Stoxx 50 | Wikipédia |
+| S&P 500, Nasdaq 100 | Wikipédia |
+
+- **Combo** en haut : choisit l'indice.
+- **Filtre** : recherche locale sur le symbole, le nom, le secteur ou la place.
+- **Tableau** triable (Symbole, Nom, Secteur, Place) : un clic sur un en-tête
+  trie, un **double-clic** remplit le champ Symbole et charge le graphique avec
+  l'intervalle et la période courants.
+- **Actualiser** : force la récupération depuis Wikipédia (le cache frais est
+  ignoré).
+- **Statut** en bas : provenance (`Réseau`, `Cache`, `Hors ligne`), nombre de
+  titres et âge du cache.
+
+Les listes sont mises en cache **7 jours** dans `cache/markets.json` (ignoré par
+git). Si le réseau échoue, l'application utilise le cache périmé, puis
+l'instantané embarqué (`trading_matrix/data/market_seeds.json`). Le chargement
+s'effectue en arrière-plan : l'interface ne gèle pas.
 
 ### Onglet « Indicateurs »
 
@@ -176,6 +226,9 @@ Affiche :
 - **Changement de données** : les signaux précédents sont effacés, les
   indicateurs actifs sont réappliqués automatiquement.
 - **Aucune donnée réseau** : bascule silencieuse sur les données de démo.
+- **Marchés hors ligne** : si Wikipédia est injoignable, le panneau utilise le
+  cache local puis les listes embarquées ; le statut indique `Cache` ou
+  `Hors ligne`.
 - **Stratégie sans données chargées** : une boîte de dialogue demande de charger
   des données d'abord.
 - **Persistance** : aucune sauvegarde automatique entre deux sessions
@@ -187,6 +240,10 @@ Affiche :
 | Raccourci | Action |
 | --- | --- |
 | `Entrée` dans le champ symbole | Charger |
+| `↑` / `↓` dans les suggestions | Naviguer dans la liste |
+| `Tab` dans les suggestions | Insérer le symbole sans charger |
+| `Échap` dans les suggestions | Fermer la liste |
 | Double-clic sur un signal | Centrer le graphique |
+| Double-clic sur un titre (Marchés) | Charger le graphique |
 | Clic sur un en-tête de colonne | Trier le tableau |
 | Clic sur **Analyser IA** | Analyser le signal avec Ollama |

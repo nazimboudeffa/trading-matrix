@@ -7,6 +7,8 @@ Visualiseur de graphiques de trading desktop, construit avec **PySide6**, **pyqt
 - Graphique en bougies japonaises + volume
 - Chargement OHLCV via OpenBB / yfinance
 - Barre d'outils : symbole, intervalle (1m, 5m, 15m, 1h, 1d, 1w), période (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y)
+- **Autocomplétion du symbole** : suggestions dès 2 caractères, navigation clavier, repli hors ligne
+- **Panneau Marchés** : CAC 40, DAX 40, FTSE MIB, FTSE 100, Euro Stoxx 50, S&P 500, Nasdaq 100 — filtre, tri et double-clic pour charger
 - Panneau indicateurs : SMA, EMA, RSI, MACD, Bandes de Bollinger
 - Indicateurs personnalisés (dossier `user_indicators/`)
 - **Stratégies** : moteur d'analyse avec stratégie Price Action générale
@@ -50,7 +52,7 @@ trading-matrix/
 ├── main.py                # Point d'entrée
 ├── trading_matrix/        # Code de l'application
 │   ├── core/              # Configuration, palette, client Ollama, contexte IA
-│   ├── data/              # Client OpenBB/yfinance + données démo
+│   ├── data/              # OpenBB/yfinance, marchés, recherche de symboles
 │   ├── charts/            # Marqueurs de signaux (flèches, zones, SL/TP)
 │   ├── indicators/        # Indicateurs techniques + moteur perso
 │   ├── strategies/        # Moteur de stratégies
@@ -58,8 +60,10 @@ trading-matrix/
 │   │   ├── engine.py      # Exécution + filtres
 │   │   ├── registry.py    # Registre built-in + perso
 │   │   └── price_action/  # Structure, patterns, zones, stratégie générale
-│   ├── ui/                # Fenêtre, panneaux, éditeur, fenêtre d'analyse IA
+│   ├── ui/                # Fenêtre, panneaux, autocomplétion, analyse IA
 │   └── utils/
+├── tests/                 # Tests pytest (réseau simulé)
+├── pytest.ini             # Configuration pytest
 ├── user_indicators/       # Tes indicateurs perso
 ├── user_strategies/       # Tes stratégies perso
 ├── doc/                   # Documentation
@@ -88,9 +92,13 @@ Exemple fourni : `example_ema_cross_atr.py`.
 - openbb
 - openbb-yfinance
 - pandas
+- lxml (parsing des tableaux Wikipédia)
 - numpy
 - ta
 - requests (client Ollama pour l'analyse IA)
+
+Les tests utilisent `pytest`, un outil de développement (non requis pour
+l'application) : `pip install pytest` puis `python -m pytest`.
 
 ## Analyse IA (optionnelle)
 
@@ -108,6 +116,8 @@ déclenchement. Voir [`doc/analyse-ia.md`](doc/analyse-ia.md).
 - Pour les intervalles intraday, certains symboles/actions peuvent limiter la période.
 - Si `ta-lib` pose problème à l'installation (notamment sous Windows), l'implémentation utilise `ta` en fallback.
 - Si OpenBB/yfinance échoue, l'app bascule sur des données de démo pour tester l'interface.
+- Les listes de marchés sont mises en cache 7 jours dans `cache/markets.json` ; sans réseau, un instantané embarqué prend le relais.
+- L'autocomplétion privilégie les places principales et se rabat sur les listes de marchés si `yfinance` est injoignable.
 
 ## AVERTISSEMENT IMPORTANT
 
