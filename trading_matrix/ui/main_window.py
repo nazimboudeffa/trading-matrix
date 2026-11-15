@@ -21,6 +21,7 @@ from trading_matrix.strategies.registry import StrategyRegistry
 from trading_matrix.ui.ai_analysis_dialog import AIAnalysisDialog
 from trading_matrix.ui.chart_widget import ChartWidget
 from trading_matrix.ui.custom_panel import CustomIndicatorPanel
+from trading_matrix.ui.markets_panel import MarketsPanel
 from trading_matrix.ui.sidebar import IndicatorPanel
 from trading_matrix.ui.strategy_panel import StrategyPanel
 from trading_matrix.ui.strategy_table import SignalTable
@@ -60,6 +61,16 @@ class MainWindow(QMainWindow):
 
         self.chart = ChartWidget(self)
         self.setCentralWidget(self.chart)
+
+        self.markets_panel = MarketsPanel(self)
+        dock_markets = QDockWidget("Marchés", self)
+        dock_markets.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea
+        )
+        dock_markets.setWidget(self.markets_panel)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock_markets)
+        dock_markets.setMinimumWidth(380)
+        self.markets_panel.instrumentActivated.connect(self.toolbar.request_load)
 
         self.sidebar = IndicatorPanel(self)
         dock = QDockWidget("Indicateurs", self)
@@ -234,6 +245,8 @@ class MainWindow(QMainWindow):
         # Ferme proprement les analyses en cours (arrêt des threads Ollama).
         for dialog in list(self.ai_dialogs):
             dialog.close()
+        self.markets_panel.shutdown()
+        self.toolbar.symbol_completer.shutdown()
         super().closeEvent(event)
 
     def clear_signals(self) -> None:

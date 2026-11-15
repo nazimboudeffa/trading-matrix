@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from trading_matrix.core.config import DEFAULT_INTERVAL, DEFAULT_PERIOD, DEFAULT_SYMBOL, INTERVALS, PERIODS
+from trading_matrix.ui.symbol_completer import SymbolCompleter
 
 
 class Toolbar(QWidget):
@@ -31,6 +32,7 @@ class Toolbar(QWidget):
         self.symbol_input.setPlaceholderText("Ex: AAPL, MSFT, BTC-USD")
         self.symbol_input.setFixedWidth(140)
         self.symbol_input.returnPressed.connect(self._emit_load)
+        self.symbol_completer = SymbolCompleter(self.symbol_input, self)
         layout.addWidget(self.symbol_input)
 
         layout.addWidget(QLabel("Intervalle"))
@@ -65,6 +67,11 @@ class Toolbar(QWidget):
             self.interval_combo.currentText(),
             self.period_combo.currentText(),
         )
+
+    def request_load(self, symbol: str) -> None:
+        """Renseigne le symbole puis demande le chargement (panneaux externes)."""
+        self.symbol_input.setText(symbol.strip().upper())
+        self._emit_load()
 
     def set_status(self, text: str) -> None:
         self.status_label.setText(text)

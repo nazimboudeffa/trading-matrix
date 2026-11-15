@@ -161,3 +161,63 @@ QSplitter::handle {
     background-color: #363a45;
     height: 3px;
 }
+
+/* Autocomplétion du champ Symbole */
+QListWidget#symbolPopup {
+    background-color: #1e222d;
+    color: #d1d4dc;
+    border: 1px solid #363a45;
+    border-radius: 4px;
+    padding: 2px;
+    outline: 0;
+}
+
+QListWidget#symbolPopup::item {
+    padding: 5px 8px;
+    border-radius: 3px;
+}
+
+QListWidget#symbolPopup::item:selected {
+    background-color: #2962ff;
+    color: #ffffff;
+}
+
+QListWidget#symbolPopup::item:hover {
+    background-color: #2a2e39;
+}
+
+/* Panneau Marchés */
+QTableView#marketTable {
+    background-color: #1e222d;
+    alternate-background-color: #232733;
+    color: #d1d4dc;
+    gridline-color: #2a2e39;
+    border: 1px solid #363a45;
+    border-radius: 4px;
+    selection-background-color: #2962ff;
+    selection-color: #ffffff;
+}
+
+QTableView#marketTable::item {
+    padding: 3px 6px;
+}
+
+QTableView#marketTable QHeaderView::section {
+    background-color: #2a2e39;
+    color: #b2b5be;
+    border: none;
+    padding: 5px 6px;
+}
+
+QTableView#marketTable QTableCornerButton::section {
+    background-color: #2a2e39;
+    border: none;
+}
+
+QLabel#marketStatus {
+    color: #787b86;
+}
+
+QLabel#marketCount {
+    color: #b2b5be;
+}
