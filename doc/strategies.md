@@ -36,6 +36,7 @@ class Signal:
     sl: float
     tp1: float
     tp2: float | None = None
+    tp3: float | None = None
     confidence: int = 50               # 0-100
     setup_type: str = "price_action"
     reason: list[str] = []
@@ -52,6 +53,7 @@ class Signal:
 | `sl` | oui | Stop Loss |
 | `tp1` | oui | Premier objectif |
 | `tp2` | non | Second objectif |
+| `tp3` | non | Troisième objectif |
 | `confidence` | non | Score de confluence |
 | `setup_type` | non | Identifiant du setup (affiché dans le tableau) |
 | `reason` | non | Liste de raisons lisibles |

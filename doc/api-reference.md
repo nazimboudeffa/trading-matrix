@@ -187,6 +187,7 @@ class Signal:
     sl: float
     tp1: float
     tp2: float | None = None
+    tp3: float | None = None
     confidence: int = 50
     setup_type: str = "price_action"
     reason: list[str] = []

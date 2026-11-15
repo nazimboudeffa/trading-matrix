@@ -147,6 +147,8 @@ def draw_signals(chart, signals) -> None:
         ]
         if sig.tp2 is not None:
             lines.append(("TP2", sig.tp2, "#4caf50"))
+        if sig.tp3 is not None:
+            lines.append(("TP3", sig.tp3, "#81c784"))
 
         for _name, price, line_color in lines:
             item = pg.PlotDataItem(

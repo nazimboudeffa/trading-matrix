@@ -244,6 +244,9 @@ class PriceActionGeneral(BaseStrategy):
                 tp2 = self._next_swing_high(swings, n - 1, tp1)
                 if tp2 is None or tp2 <= tp1:
                     tp2 = entry + 3.0 * risk
+                tp3 = self._next_swing_high(swings, n - 1, tp2)
+                if tp3 is None or tp3 <= tp2:
+                    tp3 = entry + 4.0 * risk
                 rr = (tp1 - entry) / risk
 
                 conf = 50
@@ -283,6 +286,7 @@ class PriceActionGeneral(BaseStrategy):
                     sl=sl,
                     tp1=tp1,
                     tp2=tp2,
+                    tp3=tp3,
                     confidence=conf,
                     setup_type="OB_PENDING_BULL",
                     reason=reasons,
@@ -316,6 +320,9 @@ class PriceActionGeneral(BaseStrategy):
                 tp2 = self._next_swing_low(swings, n - 1, tp1)
                 if tp2 is None or tp2 >= tp1:
                     tp2 = entry - 3.0 * risk
+                tp3 = self._next_swing_low(swings, n - 1, tp2)
+                if tp3 is None or tp3 >= tp2:
+                    tp3 = entry - 4.0 * risk
                 rr = (entry - tp1) / risk
 
                 conf = 50
@@ -355,6 +362,7 @@ class PriceActionGeneral(BaseStrategy):
                     sl=sl,
                     tp1=tp1,
                     tp2=tp2,
+                    tp3=tp3,
                     confidence=conf,
                     setup_type="OB_PENDING_BEAR",
                     reason=reasons,
@@ -413,6 +421,7 @@ class PriceActionGeneral(BaseStrategy):
                 if tp1 <= close:
                     tp1 = close + 2.0 * (close - sl)
                 tp2 = self._next_swing_high(swings, i, tp1) or (close + 3.0 * (close - sl))
+                tp3 = self._next_swing_high(swings, i, tp2) or (close + 4.0 * (close - sl))
 
                 conf = 40
                 reasons = ["Réaction haussière"]
@@ -437,6 +446,7 @@ class PriceActionGeneral(BaseStrategy):
                     sl=sl,
                     tp1=tp1,
                     tp2=tp2,
+                    tp3=tp3,
                     confidence=min(100, conf),
                     setup_type="OB_REACTION_BULL",
                     reason=reasons,
@@ -460,6 +470,7 @@ class PriceActionGeneral(BaseStrategy):
                 if tp1 >= close:
                     tp1 = close - 2.0 * (sl - close)
                 tp2 = self._next_swing_low(swings, i, tp1) or (close - 3.0 * (sl - close))
+                tp3 = self._next_swing_low(swings, i, tp2) or (close - 4.0 * (sl - close))
 
                 conf = 40
                 reasons = ["Réaction baissière"]
@@ -484,6 +495,7 @@ class PriceActionGeneral(BaseStrategy):
                     sl=sl,
                     tp1=tp1,
                     tp2=tp2,
+                    tp3=tp3,
                     confidence=min(100, conf),
                     setup_type="OB_REACTION_BEAR",
                     reason=reasons,

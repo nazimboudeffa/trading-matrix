@@ -63,6 +63,7 @@ class EmaCrossATR(BaseStrategy):
                 risk = close - sl
                 tp1 = close + rr_target * risk
                 tp2 = close + (rr_target + 1.0) * risk
+                tp3 = close + (rr_target + 2.0) * risk
                 side = Side.LONG
                 conf = min_conf
             else:
@@ -70,6 +71,7 @@ class EmaCrossATR(BaseStrategy):
                 risk = sl - close
                 tp1 = close - rr_target * risk
                 tp2 = close - (rr_target + 1.0) * risk
+                tp3 = close - (rr_target + 2.0) * risk
                 side = Side.SHORT
                 conf = min_conf
 
@@ -89,6 +91,7 @@ class EmaCrossATR(BaseStrategy):
                     sl=sl,
                     tp1=tp1,
                     tp2=tp2,
+                    tp3=tp3,
                     confidence=conf,
                     setup_type="EMA_CROSS_ATR",
                     reason=[f"Croisement EMA {fast}/{slow}", f"ATR x{atr_mult}"],

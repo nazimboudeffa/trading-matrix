@@ -143,6 +143,8 @@ TP1 = plus proche swing high au-dessus de l'entrée
       (sinon entrée + 2 × risque)
 TP2 = plus proche swing high au-dessus de TP1
       (sinon entrée + 3 × risque)
+TP3 = plus proche swing high au-dessus de TP2
+      (sinon entrée + 4 × risque)
 ```
 
 ### SHORT
@@ -153,6 +155,8 @@ TP1 = plus proche swing low sous l'entrée
       (sinon entrée - 2 × risque)
 TP2 = plus proche swing low sous TP1
       (sinon entrée - 3 × risque)
+TP3 = plus proche swing low sous TP2
+      (sinon entrée - 4 × risque)
 ```
 
 Le R:R est calculé sur `TP1` :
@@ -209,8 +213,8 @@ proximité du prix courant.
 | SHORT, prix sous l'OB | limite au bas de la zone (`zone.bottom`) | `zone.top + 0.25 × ATR` |
 | SHORT, prix dans l'OB | close courant (indicatif, en attendant la réaction) | `zone.top + 0.25 × ATR` |
 
-Les objectifs TP1 / TP2 utilisent les swings opposés disponibles, sinon
-`entrée ± 2 × risque` et `entrée ± 3 × risque`.
+Les objectifs TP1 / TP2 / TP3 utilisent les swings opposés disponibles, sinon
+`entrée ± 2 × risque`, `entrée ± 3 × risque` et `entrée ± 4 × risque`.
 
 Chaque setup porte `meta["pending"] = True` et `meta["condition"]`, qui décrit
 précisément la bougie de réaction attendue. **Un setup n'est pas un ordre** :
@@ -237,7 +241,7 @@ Pour chaque signal confirmé :
 - flèche verte (LONG) ou rouge (SHORT) sur la bougie
 - label `L <score>%` / `S <score>%`
 - bande semi-transparente représentant la zone (12 bougies avant, 18 après)
-- lignes pointillées SL / TP1 / TP2 sur ~25 bougies
+- lignes pointillées SL / TP1 / TP2 / TP3 sur ~25 bougies
 - ligne dans le tableau **Signaux détectés** avec le statut `Confirmé`
 
 Pour chaque setup à venir :
@@ -245,7 +249,7 @@ Pour chaque setup à venir :
 - diamant creux ambre projeté dans une marge à droite de la dernière bougie
 - label `L <score>% · à venir` / `S <score>% · à venir`
 - bande pointillée prolongée dans la marge future
-- lignes SL / TP1 / TP2 pointillées
+- lignes SL / TP1 / TP2 / TP3 pointillées
 - ligne dans le tableau avec le statut **`En attente`** (texte ambre)
 
 Le tableau possède une colonne **Statut** (`Confirmé` / `En attente`) et le
@@ -260,6 +264,7 @@ condition.
   SL  89.74   (zone OB + 0.25 ATR)
   TP1 77.07   (swing low)
   TP2 71.50
+  TP3 66.80
   confiance 73
   raisons : Réaction baissière | Structure baissière |
             OB baissier (84.10-86.90) | PA: BEAR_ENGULFING | R:R >= 1.5
@@ -269,7 +274,7 @@ Exemple illustratif de setup à venir (aucune bougie de réaction encore) :
 
 ```text
 2026-06-02  LONG  EN ATTENTE  OB_PENDING_BULL
-  entrée limite 82.59 | SL 79.96 | TP1 86.22 | TP2 88.50
+  entrée limite 82.59 | SL 79.96 | TP1 86.22 | TP2 88.50 | TP3 90.80
   confiance 55 — distance 13.0 % (4.0 × ATR)
   condition : attendre une bougie de réaction haussière (engulfing ou pinbar)
               dans la zone 80.12-82.59

@@ -107,7 +107,7 @@ Chaque ligne correspond à un `Signal` :
 | Setup | Identifiant du type de setup |
 | Entrée | Prix d'entrée proposé |
 | SL | Stop Loss |
-| TP1 / TP2 | Objectifs de prise de profit |
+| TP1 / TP2 / TP3 | Objectifs de prise de profit |
 | R:R | Ratio risque/rendement calculé |
 | Conf. | Score de confluence (0-100) |
 | Raisons | Détails lisibles (structure, zone, pattern...) |
@@ -160,6 +160,7 @@ prompt.
 | SL | Ligne pointillée rouge |
 | TP1 | Ligne pointillée verte |
 | TP2 | Ligne pointillée vert clair |
+| TP3 | Ligne pointillée vert pâle |
 
 ## Barre d'état
 

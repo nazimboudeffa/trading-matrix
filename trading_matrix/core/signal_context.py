@@ -202,6 +202,8 @@ def build_signal_prompt(
     lines.append(f"- TP1 : {_price(sig.tp1)}{_pct_change(sig.tp1, sig.entry)}")
     if sig.tp2 is not None:
         lines.append(f"- TP2 : {_price(sig.tp2)}{_pct_change(sig.tp2, sig.entry)}")
+    if sig.tp3 is not None:
+        lines.append(f"- TP3 : {_price(sig.tp3)}{_pct_change(sig.tp3, sig.entry)}")
 
     rr = _finite(sig.meta.get("rr"))
     if rr is None:

@@ -35,6 +35,7 @@ Signal(
     sl=stop_loss,
     tp1=take_profit_1,
     tp2=take_profit_2,     # optionnel
+    tp3=take_profit_3,     # optionnel
     confidence=70,         # 0-100
     setup_type="MON_SETUP",
     reason=["Structure haussière", "Rejet sur OB"],

@@ -28,6 +28,7 @@ class SignalTable(QWidget):
         "SL",
         "TP1",
         "TP2",
+        "TP3",
         "R:R",
         "Conf.",
         "Raisons",
@@ -35,9 +36,9 @@ class SignalTable(QWidget):
     )
     COL_SIDE = 1
     COL_STATUS = 2
-    COL_CONFIDENCE = 9
-    COL_REASON = 10
-    COL_AI = 11
+    COL_CONFIDENCE = 10
+    COL_REASON = 11
+    COL_AI = 12
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -90,6 +91,7 @@ class SignalTable(QWidget):
                 f"{sig.sl:.2f}",
                 f"{sig.tp1:.2f}",
                 f"{sig.tp2:.2f}" if sig.tp2 is not None else "-",
+                f"{sig.tp3:.2f}" if sig.tp3 is not None else "-",
                 f"{rr}",
                 f"{sig.confidence}%",
                 " | ".join(sig.reason),
