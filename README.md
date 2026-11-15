@@ -9,8 +9,8 @@ Visualiseur de graphiques de trading desktop, construit avec **PySide6**, **pyqt
 - Barre d'outils : symbole, intervalle (1m, 5m, 15m, 1h, 1d, 1w), période (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y)
 - **Autocomplétion du symbole** : suggestions dès 2 caractères, navigation clavier, repli hors ligne
 - **Panneau Marchés** : CAC 40, DAX 40, FTSE MIB, FTSE 100, Euro Stoxx 50, S&P 500, Nasdaq 100 — filtre, tri et double-clic pour charger
-- Panneau indicateurs : SMA, EMA, RSI, MACD, Bandes de Bollinger
-- Indicateurs personnalisés (dossier `user_indicators/`)
+- Panneau indicateurs unifié (SMA, EMA, RSI, MACD, Bandes de Bollinger + tes indicateurs)
+- Indicateurs : **tous** dans `user_indicators/` (les défauts + les tiens)
 - **Stratégies** : moteur d'analyse avec stratégie Price Action générale
   - Structure de marché (swings, tendance)
   - Order Blocks non mitigés
@@ -20,7 +20,7 @@ Visualiseur de graphiques de trading desktop, construit avec **PySide6**, **pyqt
   - **Signaux à venir** : setups conditionnels sur Order Blocks non testés, projetés à droite du graphique avec un statut « En attente »
   - Tableau des signaux avec navigation au double-clic
   - **Analyse IA locale** de chaque signal (confirmé ou à venir) via Ollama (fenêtre dédiée, choix du modèle)
-- Stratégies personnalisées (dossier `user_strategies/`)
+- Stratégies : **toutes** dans `user_strategies/` (la stratégie par défaut + les tiennes)
 - Thème sombre proche de TradingView
 - Crosshair avec informations OHLCV
 - Zoom / Pan
@@ -50,40 +50,43 @@ python main.py
 ```text
 trading-matrix/
 ├── main.py                # Point d'entrée
-├── trading_matrix/        # Code de l'application
+├── trading_matrix/        # Code de l'application (cœur)
 │   ├── core/              # Configuration, palette, client Ollama, contexte IA
 │   ├── data/              # OpenBB/yfinance, marchés, recherche de symboles
 │   ├── charts/            # Marqueurs de signaux (flèches, zones, SL/TP)
-│   ├── indicators/        # Indicateurs techniques + moteur perso
-│   ├── strategies/        # Moteur de stratégies
+│   ├── indicators/        # Moteur de chargement des indicateurs
+│   ├── strategies/        # Moteur de stratégies + bibliothèque price action
 │   │   ├── base.py        # Signal, StrategyContext, BaseStrategy
 │   │   ├── engine.py      # Exécution + filtres
-│   │   ├── registry.py    # Registre built-in + perso
-│   │   └── price_action/  # Structure, patterns, zones, stratégie générale
+│   │   ├── registry.py    # Registre des stratégies
+│   │   └── price_action/  # Structure, patterns, zones (bibliothèque)
 │   ├── ui/                # Fenêtre, panneaux, autocomplétion, analyse IA
 │   └── utils/
 ├── tests/                 # Tests pytest (réseau simulé)
 ├── pytest.ini             # Configuration pytest
-├── user_indicators/       # Tes indicateurs perso
-├── user_strategies/       # Tes stratégies perso
+├── user_indicators/       # Tous les indicateurs (défaut + perso)
+├── user_strategies/       # Toutes les stratégies (défaut + perso)
 ├── doc/                   # Documentation
 ├── assets/                # Ressources (icônes)
 └── requirements.txt
 ```
 
-## Indicateurs personnalisés
+## Indicateurs
 
-Chaque fichier `.py` dans `user_indicators/` doit exposer `compute(df, **params)`
-et retourner un `IndicatorResult` (`overlay` ou `subplot`).
-Voir `user_indicators/README.md`.
+**Tous** les indicateurs vivent dans `user_indicators/` : les indicateurs
+livrés par défaut (SMA, EMA, Bollinger, RSI, MACD) et les tiens. Le cœur du
+logiciel ne fournit que le moteur de chargement. Chaque fichier `.py` doit
+exposer `compute(df, **params)` et retourner un `IndicatorResult`
+(`overlay` ou `subplot`). Voir `user_indicators/README.md`.
 
-## Stratégies personnalisées
+## Stratégies
 
-Chaque fichier `.py` dans `user_strategies/` doit définir une classe
-héritant de `BaseStrategy` avec un `id` unique et une méthode
-`analyze(ctx) -> list[Signal]`. Voir `user_strategies/README.md`.
+**Toutes** les stratégies vivent dans `user_strategies/`, y compris la
+stratégie Price Action générale (`pa_general`). Chaque fichier `.py` doit
+définir une classe héritant de `BaseStrategy` avec un `id` unique et une
+méthode `analyze(ctx) -> list[Signal]`. Voir `user_strategies/README.md`.
 
-Exemple fourni : `example_ema_cross_atr.py`.
+Exemples fournis : `price_action_general.py` et `example_ema_cross_atr.py`.
 
 ## Dépendances principales
 

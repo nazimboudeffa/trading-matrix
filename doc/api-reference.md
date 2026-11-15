@@ -113,16 +113,8 @@ Génère une marche aléatoire OHLCV déterministe (seed basée sur le symbole).
 
 ## `indicators`
 
-### `IndicatorManager`
-
-```python
-class IndicatorManager:
-    def sma(df, period=20, column="Close") -> pd.Series
-    def ema(df, period=20, column="Close") -> pd.Series
-    def rsi(df, period=14, column="Close") -> pd.Series
-    def macd(df, fast=12, slow=26, signal=9, column="Close") -> tuple[Series, Series, Series]
-    def bollinger(df, period=20, std=2.0, column="Close") -> tuple[Series, Series, Series]
-```
+Tous les indicateurs sont des fichiers de `user_indicators/` (voir
+[Indicateurs](indicateurs.md)). Le cœur fournit uniquement le chargement.
 
 ### `trading_matrix.indicators.base`
 
@@ -143,32 +135,51 @@ class IndicatorResult:
     height: int = 120
     hlines: list[tuple[float, str]] = []
     vlines: list[tuple[float, str]] = []
+
+@dataclass
+class ParamSpec:
+    name: str
+    type: str = "int"          # "int" | "float" | "bool" | "str"
+    default: Any = 0
+    min: float | None = None
+    max: float | None = None
+    step: float | None = None
+    label: str = ""
+
+def normalize_params(params: dict | None) -> list[ParamSpec]
 ```
 
-### `CustomIndicatorExecutor`
+`normalize_params` convertit un dictionnaire `PARAMS` (valeurs simples ou
+descriptions détaillées) en liste de `ParamSpec`.
+
+### `trading_matrix.indicators.loader`
 
 ```python
-class CustomIndicatorExecutor:
+class IndicatorLoader:
     def __init__(self, root: str | Path = USER_INDICATORS_DIR)
     def load_module(self, path: Path) -> ModuleType
     def execute(self, mod, df: pd.DataFrame, params: dict | None = None)
 ```
 
-### `CustomRegistry`
+### `trading_matrix.indicators.registry`
 
 ```python
 @dataclass
-class CustomIndicator:
+class IndicatorEntry:
     id: str
     name: str
     path: Path
     module: Any
     description: str = ""
-    params: dict = {}
+    specs: list[ParamSpec] = []
 
-class CustomRegistry:
-    def __init__(self, root: str = USER_INDICATORS_DIR)
-    def discover(self) -> dict[str, CustomIndicator]
+    @property
+    def defaults(self) -> dict[str, Any]
+
+class IndicatorRegistry:
+    def __init__(self, root: str | Path = USER_INDICATORS_DIR)
+    def discover(self) -> dict[str, IndicatorEntry]
+    def get(self, cid: str) -> IndicatorEntry | None
     def compute(self, cid: str, df, params: dict | None = None) -> IndicatorResult
 ```
 
@@ -267,6 +278,9 @@ def mitigate_zones(zones, df) -> list[Zone]
 
 ### `trading_matrix.strategies.price_action.general`
 
+> La stratégie Price Action générale est désormais livrée dans
+> `user_strategies/price_action_general.py` (elle n'est plus dans le cœur).
+
 ```python
 class PriceActionGeneral(BaseStrategy):
     id = "pa_general"
@@ -292,7 +306,7 @@ class StrategyEntry:
     name: str
     description: str
     instance: BaseStrategy
-    source: str            # "builtin" | "user"
+    source: str            # "user" (toutes les stratégies sont dans user_strategies/)
     path: Path | None
     params_schema: dict
 
@@ -375,30 +389,15 @@ class Toolbar(QWidget):
 
 ```python
 class IndicatorPanel(QWidget):
-    indicatorsChanged = Signal(dict)
+    indicatorsChanged = Signal(list)   # [(id, params), ...] cochés
     clearRequested = Signal()
-```
 
-Structure du dictionnaire émis :
-
-```python
-{
-  "sma": {"enabled": bool, "period": int},
-  "ema": {"enabled": bool, "period": int},
-  "bb":  {"enabled": bool, "period": int, "std": float},
-  "rsi": {"enabled": bool, "period": int},
-  "macd":{"enabled": bool, "fast": int, "slow": int, "signal": int},
-}
-```
-
-### `CustomIndicatorPanel`
-
-```python
-class CustomIndicatorPanel(QWidget):
-    applyCustom = Signal(str, dict)   # id, params
-    clearCustom = Signal()
     def refresh(self) -> None
 ```
+
+Panneau unique listant tous les indicateurs de `user_indicators/`. Chaque
+indicateur est un groupe cochable dont les paramètres génèrent
+automatiquement les widgets correspondants (voir `ParamSpec`).
 
 ### `IndicatorEditorDialog`
 
@@ -477,15 +476,13 @@ class MainWindow(QMainWindow):
     def clear_signals(self) -> None
     def focus_signal(self, sig) -> None
     def open_ai_analysis(self, sig) -> None
-    def apply_indicators(self, cfg: dict) -> None
+    def apply_indicators(self, selection: list) -> None   # [(id, params), ...]
     def clear_indicators(self) -> None
-    def apply_custom_indicator(self, cid: str, params: dict) -> None
-    def clear_custom_indicators(self) -> None
 ```
 
 Attributs notables : `current_df`, `current_symbol`, `current_interval`,
 `signals`, `ai_dialogs`, `client`, `strategy_engine`, `strategy_registry`,
-`custom_registry`.
+`indicator_registry`.
 
 `open_ai_analysis` vérifie Ollama (installé, démarré, modèles disponibles) et
 affiche une boîte de dialogue explicite sinon ; dans le cas nominal, elle ouvre

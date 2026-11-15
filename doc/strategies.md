@@ -9,10 +9,10 @@ Elle est indépendante de l'interface : elle peut être testée en dehors de Qt.
 | --- | --- |
 | `trading_matrix/strategies/base.py` | `Side`, `Signal`, `StrategyContext`, `BaseStrategy` |
 | `trading_matrix/strategies/engine.py` | `StrategyEngine` : exécution + filtres |
-| `trading_matrix/strategies/registry.py` | `StrategyRegistry` : découverte built-in + perso |
+| `trading_matrix/strategies/registry.py` | `StrategyRegistry` : découverte des stratégies |
 | `trading_matrix/strategies/utils.py` | ATR, engulfing, pinbar, helpers |
-| `trading_matrix/strategies/price_action/` | Modules de la stratégie Price Action |
-| `user_strategies/` | Stratégies personnalisées |
+| `trading_matrix/strategies/price_action/` | Bibliothèque price action réutilisable (structure, patterns, zones) |
+| `user_strategies/` | Toutes les stratégies (dont `pa_general`) |
 
 ## Modèle de données
 
@@ -114,12 +114,13 @@ Clés reconnues : `type`, `default`, `min`, `max`, `step`, `label`.
 
 ## Registre
 
-`StrategyRegistry` scanne :
+`StrategyRegistry` scanne les fichiers `.py` de `user_strategies/`
+(hors `_*.py`). **Toutes** les stratégies vivent dans ce dossier, y compris la
+stratégie Price Action générale (`pa_general`, fichier
+`user_strategies/price_action_general.py`) : le cœur du logiciel ne contient
+plus de stratégie en dur.
 
-1. les stratégies **intégrées** (`_builtin_strategies()`)
-2. les fichiers `.py` de `user_strategies/` (hors `_*.py`)
-
-Pour chaque fichier perso, toutes les classes héritant de `BaseStrategy`
+Pour chaque fichier, toutes les classes héritant de `BaseStrategy`
 (autres que `BaseStrategy` elle-même) sont instanciées et enregistrées par
 leur `id`. **Un `id` doit être unique** : en cas de collision, la dernière
 stratégie chargée écrase la précédente.
@@ -132,8 +133,8 @@ registry.get("pa_general")
 registry.default_params("pa_general")
 ```
 
-`StrategyEntry` expose : `id`, `name`, `description`, `instance`, `source`
-(`builtin` / `user`), `path`, `params_schema`.
+`StrategyEntry` expose : `id`, `name`, `description`, `instance`, `source`,
+`path`, `params_schema`.
 
 ## Moteur
 
@@ -247,10 +248,13 @@ signals = engine.run("ma_strategie", df)
 print(len(signals))
 ```
 
-## Exemple fourni
+## Exemples fournis
 
-`user_strategies/example_ema_cross_atr.py` implémente un croisement
-EMA rapide/lente avec SL basé sur l'ATR. Il sert de modèle complet.
+- `user_strategies/price_action_general.py` : la stratégie Price Action
+  générale (`pa_general`), basée sur la structure de marché et les Order Blocks.
+  Voir [Stratégie Price Action](strategie-price-action.md).
+- `user_strategies/example_ema_cross_atr.py` : un croisement EMA rapide/lente
+  avec SL basé sur l'ATR. Il sert de modèle complet et minimal.
 
 ## Limites actuelles
 

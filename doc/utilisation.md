@@ -12,7 +12,6 @@ tableau des signaux en bas.
 ├──────────────┬────────────────────────────────┬───────────────┤
 │  Marchés     │                                │  Docks :      │
 │  (indices)   │       Graphique (bougies)      │  - Indicateurs│
-│              │                                │  - Mes ind.   │
 │              │                                │  - Stratégies │
 ├──────────────┴────────────────────────────────┤               │
 │              Volume                           │               │
@@ -84,9 +83,8 @@ graphique principal : un zoom sur l'un s'applique aux autres.
 ## Panneaux (docks)
 
 Le panneau **Marchés** occupe la gauche de la fenêtre. Les panneaux
-**Indicateurs**, **Mes indicateurs** et **Stratégies** sont empilés en onglets à
-droite. Tous peuvent être détachés, déplacés ou redimensionnés (comportement Qt
-standard).
+**Indicateurs** et **Stratégies** sont empilés en onglets à droite. Tous peuvent
+être détachés, déplacés ou redimensionnés (comportement Qt standard).
 
 ### Panneau « Marchés » (à gauche)
 
@@ -114,27 +112,30 @@ s'effectue en arrière-plan : l'interface ne gèle pas.
 
 ### Onglet « Indicateurs »
 
-Indicateurs intégrés, configurables puis appliqués avec **Appliquer**.
+Ce panneau unique liste **tous** les indicateurs de `user_indicators/` :
+les indicateurs livrés par défaut (SMA, EMA, Bandes de Bollinger, RSI, MACD)
+et ceux que tu ajoutes. Coche un ou plusieurs indicateurs, règle leurs
+paramètres, puis clique sur **Appliquer**.
 
 | Indicateur | Type | Paramètres |
 | --- | --- | --- |
-| SMA | Superposé au prix | Période |
-| EMA | Superposé au prix | Période |
+| SMA | Superposé au prix | Période, couleur |
+| EMA | Superposé au prix | Période, couleur |
 | Bandes de Bollinger | Superposé au prix | Période, écart-type |
 | RSI | Sous-graphique | Période |
 | MACD | Sous-graphique | Fast, Slow, Signal |
 
-**Effacer tout** retire tous les indicateurs (intégrés et personnalisés) du
-graphique. Les signaux de stratégie ne sont pas affectés.
+Les widgets de paramètres sont générés automatiquement à partir du
+dictionnaire `PARAMS` de chaque fichier : voir
+[Indicateurs](indicateurs.md).
 
-### Onglet « Mes indicateurs »
-
-Voir [Indicateurs personnalisés](indicateurs.md).
-
-- **Nouveau...** ouvre un éditeur de code intégré
+- **Appliquer** affiche les indicateurs cochés (remplace les précédents)
+- **Effacer tout** retire tous les indicateurs du graphique
 - **Rafraîchir** rescanne `user_indicators/`
-- **Appliquer à la vue** exécute l'indicateur sélectionné
-- **Effacer indicateurs perso** nettoie la vue
+- **Nouveau...** ouvre un éditeur de code intégré
+- **Ouvrir le dossier** ouvre `user_indicators/` dans l'explorateur
+
+Les signaux de stratégie ne sont pas affectés.
 
 ### Onglet « Stratégies »
 

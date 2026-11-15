@@ -57,10 +57,17 @@ logs/
 # Data
 *.csv
 
-# Custom indicators & strategies (keep examples)
+# Indicateurs & stratégies livrés par défaut (dans user_*), mais tout
+# fichier ajouté par l'utilisateur reste ignoré pour ne pas polluer le dépôt.
 user_indicators/*.py
 !user_indicators/__init__.py
+!user_indicators/sma.py
+!user_indicators/ema.py
+!user_indicators/bollinger.py
+!user_indicators/rsi.py
+!user_indicators/macd.py
 !user_indicators/example_cross_ma.py
 user_strategies/*.py
 !user_strategies/__init__.py
+!user_strategies/price_action_general.py
 !user_strategies/example_ema_cross_atr.py

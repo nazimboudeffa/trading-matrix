@@ -1,6 +1,11 @@
-# Stratégies personnalisées
+# Stratégies
 
-Chaque fichier `.py` de ce dossier est chargé automatiquement dans le panneau **Stratégies**.
+Chaque fichier `.py` de ce dossier est chargé automatiquement dans le panneau
+**Stratégies**. La stratégie Price Action générale (`pa_general`) est livrée ici,
+dans `price_action_general.py` : le cœur du logiciel ne contient plus de
+stratégie « en dur », seulement le moteur d'exécution et les bibliothèques
+réutilisables (`trading_matrix.strategies.utils`,
+`trading_matrix.strategies.price_action.*`).
 
 ## Contrat
 

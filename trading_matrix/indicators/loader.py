@@ -4,19 +4,13 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from trading_matrix.core.config import USER_INDICATORS_DIR
 
-try:
-    import ta
-except Exception:
-    ta = None
 
-
-class CustomIndicatorExecutor:
-    ALLOWED_BUILTINS = {"len": len, "range": range, "min": min, "max": max, "abs": abs, "round": round, "int": int, "float": float, "bool": bool, "enumerate": enumerate, "zip": zip, "sum": sum, "list": list, "dict": dict, "tuple": tuple, "set": set}
+class IndicatorLoader:
+    """Charge et exécute les modules d'indicateurs du dossier ``user_indicators/``."""
 
     def __init__(self, root: Path | str = USER_INDICATORS_DIR):
         self.root = Path(root)
@@ -34,6 +28,5 @@ class CustomIndicatorExecutor:
     def execute(self, mod: ModuleType, df: pd.DataFrame, params: dict[str, Any] | None = None):
         params = params or {}
         if not hasattr(mod, "compute"):
-            raise AttributeError("Ton indicateur doit définir une fonction compute(df, **params)")
-        func = mod.compute
-        return func(df, **params)
+            raise AttributeError("L'indicateur doit définir une fonction compute(df, **params)")
+        return mod.compute(df, **params)

@@ -17,15 +17,9 @@ class StrategyEntry:
     name: str
     description: str
     instance: BaseStrategy
-    source: str = "builtin"  # builtin | user
+    source: str = "user"  # toutes les stratégies vivent dans user_strategies/
     path: Path | None = None
     params_schema: dict[str, Any] = field(default_factory=dict)
-
-
-def _builtin_strategies() -> list[BaseStrategy]:
-    from trading_matrix.strategies.price_action.general import PriceActionGeneral
-
-    return [PriceActionGeneral()]
 
 
 def _load_user_module(path: Path) -> ModuleType:
@@ -47,16 +41,6 @@ class StrategyRegistry:
 
     def discover(self) -> dict[str, StrategyEntry]:
         self.items.clear()
-
-        for strat in _builtin_strategies():
-            self.items[strat.id] = StrategyEntry(
-                id=strat.id,
-                name=strat.name,
-                description=strat.description,
-                instance=strat,
-                source="builtin",
-                params_schema=strat.params_schema,
-            )
 
         for py in sorted(self.user_dir.glob("*.py")):
             if py.name.startswith("_"):

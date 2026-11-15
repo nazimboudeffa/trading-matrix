@@ -1,43 +1,38 @@
 # Indicateurs
 
-Le projet propose deux familles d'indicateurs :
+Tous les indicateurs du logiciel vivent dans le dossier `user_indicators/` :
+les indicateurs **livrés par défaut** et ceux que tu écris toi-même. Le cœur
+du logiciel (`trading_matrix/indicators/`) ne contient **aucun indicateur en
+dur** : il fournit uniquement le moteur de chargement.
 
-- les **indicateurs intégrés** (calculés par `IndicatorManager`)
-- les **indicateurs personnalisés**, chargés depuis `user_indicators/`
+Ils s'affichent de la même manière : soit **superposés au prix** (`overlay`),
+soit dans un **sous-graphique** dédié (`subplot`).
 
-Les deux s'affichent de la même manière : soit **superposés au prix**
-(`overlay`), soit dans un **sous-graphique** dédié (`subplot`).
+## Indicateurs livrés par défaut
 
-## Indicateurs intégrés
-
-Implémentation : `trading_matrix/indicators/manager.py`.
-
-| Méthode | Signature | Retour |
-| --- | --- | --- |
-| `sma` | `sma(df, period=20, column="Close")` | `pd.Series` |
-| `ema` | `ema(df, period=20, column="Close")` | `pd.Series` |
-| `rsi` | `rsi(df, period=14, column="Close")` | `pd.Series` (0-100) |
-| `macd` | `macd(df, fast=12, slow=26, signal=9, column="Close")` | tuple `(macd, signal, histogram)` |
-| `bollinger` | `bollinger(df, period=20, std=2.0, column="Close")` | tuple `(upper, mid, lower)` |
+| Fichier | Nom | Type | Paramètres |
+| --- | --- | --- | --- |
+| `sma.py` | SMA | overlay | `period`, `color` |
+| `ema.py` | EMA | overlay | `period`, `color` |
+| `bollinger.py` | Bandes de Bollinger | overlay | `period`, `std` |
+| `rsi.py` | RSI | subplot | `period` |
+| `macd.py` | MACD | subplot | `fast`, `slow`, `signal` |
 
 ### Détails de calcul
 
 - **SMA** : moyenne mobile simple (`rolling(period).mean()`)
 - **EMA** : moyenne mobile exponentielle (`ewm(span=period, adjust=False)`)
-- **RSI** : via `ta` si disponible, sinon moyenne simple des gains/pertes
-- **MACD** : via `ta` si disponible, sinon `EMA(fast) - EMA(slow)` +
-  signal `EMA(signal)` et histogramme `MACD - Signal`
-- **Bollinger** : via `ta` si disponible, sinon `SMA ± std × écart-type roulant`
+- **Bollinger** : `SMA ± std × écart-type roulant`
+- **RSI** : moyenne simple des gains/pertes, borné 0-100, lignes 70/30
+- **MACD** : `EMA(fast) - EMA(slow)` + signal `EMA(signal)` + histogramme
 
 ### Rendu
 
 - SMA, EMA, Bollinger → **overlay** sur le graphique principal
-- RSI → **subplot** (hauteur ~110 px)
+- RSI → **subplot** (hauteur ~110 px, lignes 70/30)
 - MACD → **subplot** (hauteur ~130 px)
 
-Le RSI intégré affiche également des lignes à 70 et 30 (séries constantes).
-
-## Indicateurs personnalisés
+## Créer un indicateur
 
 ### Emplacement
 
@@ -51,7 +46,7 @@ import pandas as pd
 
 NAME = "Nom affiché"
 DESCRIPTION = "Description courte"
-PARAMS = {"period": 20}   # valeurs par défaut passées à compute()
+PARAMS = {"period": 20}
 
 def compute(df: pd.DataFrame, period: int = 20):
     ...
@@ -61,14 +56,41 @@ def compute(df: pd.DataFrame, period: int = 20):
 | Élément | Rôle |
 | --- | --- |
 | `NAME` | Nom affiché dans la liste (défaut : nom du fichier) |
-| `DESCRIPTION` | Texte affiché sous la liste |
-| `PARAMS` | Paramètres par défaut (dictionnaire) |
+| `DESCRIPTION` | Texte affiché sous le nom et en infobulle |
+| `PARAMS` | Description des paramètres (voir ci-dessous) |
 | `compute(df, **params)` | **Obligatoire**. Reçoit le DataFrame OHLCV et les paramètres |
 
 Le `DataFrame` reçu contient :
 
 - index : `DatetimeIndex`
 - colonnes : `Open`, `High`, `Low`, `Close`, `Volume` (et parfois `Adj Close`)
+
+### Paramètres (`PARAMS`)
+
+Chaque entrée de `PARAMS` génère automatiquement un widget dans le panneau
+**Indicateurs**. Deux formes sont acceptées :
+
+```python
+# Forme simple : le type est déduit de la valeur
+PARAMS = {"period": 20}
+
+# Forme détaillée : contrôle du widget (type, bornes, libellé, pas)
+PARAMS = {
+    "period": {"type": "int", "default": 20, "min": 2, "max": 400, "label": "Période"},
+    "std": {"type": "float", "default": 2.0, "min": 0.5, "max": 5.0, "step": 0.5, "label": "Écart-type"},
+    "log": {"type": "bool", "default": False, "label": "Échelle log"},
+    "color": {"type": "str", "default": "#f0b90b", "label": "Couleur"},
+}
+```
+
+| Type | Widget généré |
+| --- | --- |
+| `int` | `QSpinBox` (borné par `min`/`max`, pas `step`) |
+| `float` | `QDoubleSpinBox` (borné par `min`/`max`, pas `step`) |
+| `bool` | `QCheckBox` |
+| `str` | `QLineEdit` |
+
+Le libellé affiché est `label` (sinon le nom de la clé).
 
 ### Objets de retour
 
@@ -155,7 +177,7 @@ import pandas as pd
 
 NAME = "RSI maison"
 DESCRIPTION = "RSI simple avec zones 70/30"
-PARAMS = {"period": 14}
+PARAMS = {"period": {"type": "int", "default": 14, "min": 2, "max": 100, "label": "Période"}}
 
 def compute(df: pd.DataFrame, period: int = 14):
     from trading_matrix.indicators.base import IndicatorResult, PlotItem
@@ -175,7 +197,7 @@ def compute(df: pd.DataFrame, period: int = 14):
 
 ### Éditeur intégré
 
-L'onglet **Mes indicateurs** contient un bouton **Nouveau...** qui ouvre un
+Le panneau **Indicateurs** contient un bouton **Nouveau...** qui ouvre un
 éditeur avec un template prêt à modifier.
 
 1. Saisir un nom de fichier (`.py` ajouté automatiquement)
@@ -183,7 +205,7 @@ L'onglet **Mes indicateurs** contient un bouton **Nouveau...** qui ouvre un
 3. **Enregistrer** → écrit dans `user_indicators/`
 4. **Rafraîchir** dans le panneau pour recharger la liste
 
-Le bouton **Ouvrir dossier** ouvre `user_indicators/` dans l'explorateur.
+Le bouton **Ouvrir le dossier** ouvre `user_indicators/` dans l'explorateur.
 
 ### Cycle de vie et erreurs
 
@@ -195,15 +217,11 @@ Le bouton **Ouvrir dossier** ouvre `user_indicators/` dans l'explorateur.
 | Colonne manquante | Exception Python remontée dans la boîte de dialogue |
 | Retour invalide | `TypeError` explicite |
 
-Les paramètres (`PARAMS`) sont envoyés tels quels lors de l'application.
-Il n'existe pas encore d'interface de réglage dynamique pour les indicateurs
-personnalisés : modifie `PARAMS` dans le fichier puis **Rafraîchir**.
-
 ### Sécurité
 
-Le code des indicateurs personnalisés est **exécuté localement avec les
-privilèges Python complets**. Il n'y a pas de bac à sable. N'exécute que du
-code que tu as écrit ou dont tu comprends le contenu.
+Le code des indicateurs est **exécuté localement avec les privilèges Python
+complets**. Il n'y a pas de bac à sable. N'exécute que du code que tu as écrit
+ou dont tu comprends le contenu.
 
 ### Bonnes pratiques
 

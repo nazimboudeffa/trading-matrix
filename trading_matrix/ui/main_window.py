@@ -14,15 +14,13 @@ from PySide6.QtWidgets import (
 from trading_matrix.core import ollama_client
 from trading_matrix.core.config import APP_NAME, WINDOW_HEIGHT, WINDOW_WIDTH
 from trading_matrix.data.openbb_client import OpenBBClient
-from trading_matrix.indicators.custom_registry import CustomRegistry
-from trading_matrix.indicators.manager import IndicatorManager
+from trading_matrix.indicators.registry import IndicatorRegistry
 from trading_matrix.strategies.engine import StrategyEngine
 from trading_matrix.strategies.registry import StrategyRegistry
 from trading_matrix.ui.ai_analysis_dialog import AIAnalysisDialog
 from trading_matrix.ui.chart_widget import ChartWidget
-from trading_matrix.ui.custom_panel import CustomIndicatorPanel
+from trading_matrix.ui.indicator_panel import IndicatorPanel
 from trading_matrix.ui.markets_panel import MarketsPanel
-from trading_matrix.ui.sidebar import IndicatorPanel
 from trading_matrix.ui.strategy_panel import StrategyPanel
 from trading_matrix.ui.strategy_table import SignalTable
 from trading_matrix.ui.toolbar import Toolbar
@@ -35,14 +33,13 @@ class MainWindow(QMainWindow):
         self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
         self.client = OpenBBClient()
-        self.im = IndicatorManager()
-        self.custom_registry = CustomRegistry()
+        self.indicator_registry = IndicatorRegistry()
         self.strategy_registry = StrategyRegistry()
         self.strategy_engine = StrategyEngine(self.strategy_registry)
         self.current_symbol = ""
         self.current_interval = ""
         self.current_df = None
-        self.last_cfg = None
+        self.last_selection = None
         self.signals = []
         self.ai_dialogs: list[AIAnalysisDialog] = []
 
@@ -72,25 +69,18 @@ class MainWindow(QMainWindow):
         dock_markets.setMinimumWidth(380)
         self.markets_panel.instrumentActivated.connect(self.toolbar.request_load)
 
-        self.sidebar = IndicatorPanel(self)
+        self.sidebar = IndicatorPanel(self.indicator_registry, self)
         dock = QDockWidget("Indicateurs", self)
         dock.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea | Qt.DockWidgetArea.LeftDockWidgetArea)
         dock.setWidget(self.sidebar)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
-
-        self.custom_panel = CustomIndicatorPanel(self.custom_registry, self)
-        dock2 = QDockWidget("Mes indicateurs", self)
-        dock2.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea | Qt.DockWidgetArea.LeftDockWidgetArea)
-        dock2.setWidget(self.custom_panel)
-        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock2)
-        self.tabifyDockWidget(dock, dock2)
 
         self.strategy_panel = StrategyPanel(self.strategy_registry, self)
         dock3 = QDockWidget("Stratégies", self)
         dock3.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea | Qt.DockWidgetArea.LeftDockWidgetArea)
         dock3.setWidget(self.strategy_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock3)
-        self.tabifyDockWidget(dock2, dock3)
+        self.tabifyDockWidget(dock, dock3)
 
         self.signal_table = SignalTable(self)
         dock4 = QDockWidget("Signaux détectés", self)
@@ -101,8 +91,6 @@ class MainWindow(QMainWindow):
 
         self.sidebar.indicatorsChanged.connect(self.apply_indicators)
         self.sidebar.clearRequested.connect(self.clear_indicators)
-        self.custom_panel.applyCustom.connect(self.apply_custom_indicator)
-        self.custom_panel.clearCustom.connect(self.clear_custom_indicators)
         self.strategy_panel.analyzeRequested.connect(self.run_strategy)
         self.strategy_panel.clearRequested.connect(self.clear_signals)
         self.signal_table.signalActivated.connect(self.focus_signal)
@@ -133,9 +121,9 @@ class MainWindow(QMainWindow):
             self.signals = []
             self.signal_table.clear()
             self.status.showMessage(f"{symbol} | {len(df)} bougies | {interval} | {period}")
-            # Réappliquer indicateurs si déjà configurés
-            if self.last_cfg:
-                self.apply_indicators(self.last_cfg)
+            # Réappliquer les indicateurs si déjà configurés
+            if self.last_selection:
+                self.apply_indicators(self.last_selection)
         except Exception as e:
             QMessageBox.critical(self, "Erreur", str(e))
             self.status.showMessage("Erreur de chargement")
@@ -261,77 +249,29 @@ class MainWindow(QMainWindow):
         self.chart.focus_on_time(sig.time, span=80)
 
     def clear_indicators(self) -> None:
-        self.last_cfg = None
+        self.last_selection = None
         self.chart.clear_indicators()
 
-    def apply_custom_indicator(self, cid: str, params: dict):
+    def apply_indicators(self, selection: list) -> None:
+        """Applique la liste [(id, params), ...] d'indicateurs cochés."""
         if self.current_df is None:
             QMessageBox.information(self, "Info", "Charger des données d'abord.")
             return
-        try:
-            res = self.custom_registry.compute(cid, self.current_df, params)
-            if res.kind == "overlay":
-                for p in res.plots:
-                    self.chart.add_overlay(p.series, p.label, color=p.color, width=p.width)
-            elif res.kind == "subplot":
-                series_list = []
-                for p in res.plots:
-                    series_list.append((p.label, p.series, p.color))
-                self.chart.add_subplot(res.name, series_list, height=res.height, hlines=res.hlines)
-        except Exception as e:
-            QMessageBox.critical(self, "Erreur", str(e))
-
-    def clear_custom_indicators(self):
+        self.last_selection = selection
         self.chart.clear_indicators()
 
-    def apply_indicators(self, cfg: dict) -> None:
-        if self.current_df is None:
-            QMessageBox.information(self, "Info", "Charger des données d'abord.")
-            return
-        self.last_cfg = cfg
-        df = self.current_df
-        self.chart.clear_indicators()
+        for cid, params in selection or []:
+            try:
+                res = self.indicator_registry.compute(cid, self.current_df, params)
+            except Exception as e:
+                QMessageBox.critical(self, "Erreur indicateur", f"{cid} : {e}")
+                continue
+            self._draw_indicator(res)
 
-        # SMA / EMA overlay
-        if cfg.get("sma", {}).get("enabled"):
-            p = int(cfg["sma"]["period"])
-            self.chart.add_overlay(self.im.sma(df, p), f"SMA({p})", color="#f0b90b")
-
-        if cfg.get("ema", {}).get("enabled"):
-            p = int(cfg["ema"]["period"])
-            self.chart.add_overlay(self.im.ema(df, p), f"EMA({p})", color="#2962ff")
-
-        if cfg.get("bb", {}).get("enabled"):
-            p = int(cfg["bb"]["period"])
-            sd = float(cfg["bb"]["std"])
-            upper, mid, lower = self.im.bollinger(df, p, sd)
-            self.chart.add_bollinger(upper, mid, lower)
-
-        # RSI
-        if cfg.get("rsi", {}).get("enabled"):
-            p = int(cfg["rsi"]["period"])
-            rsi = self.im.rsi(df, p)
-            # Lignes 70/30
-            upper = df.copy()
-            lower = df.copy()
-            # Créer séries constantes
-            import pandas as _pd
-            up_s = _pd.Series([70] * len(rsi), index=rsi.index)
-            lo_s = _pd.Series([30] * len(rsi), index=rsi.index)
-            self.chart.add_subplot(
-                f"RSI({p})",
-                [("RSI", rsi, "#9c27b0"), ("70", up_s, "#ef5350"), ("30", lo_s, "#26a69a")],
-                height=110,
-            )
-
-        # MACD
-        if cfg.get("macd", {}).get("enabled"):
-            fast = int(cfg["macd"]["fast"])
-            slow = int(cfg["macd"]["slow"])
-            signal = int(cfg["macd"]["signal"])
-            macd_line, sig_line, hist = self.im.macd(df, fast, slow, signal)
-            self.chart.add_subplot(
-                "MACD",
-                [("MACD", macd_line, "#2962ff"), ("Signal", sig_line, "#f0b90b"), ("Hist", hist, "#787b86")],
-                height=130,
-            )
+    def _draw_indicator(self, res) -> None:
+        if res.kind == "overlay":
+            for p in res.plots:
+                self.chart.add_overlay(p.series, p.label, color=p.color, width=p.width)
+        elif res.kind == "subplot":
+            series_list = [(p.label, p.series, p.color) for p in res.plots]
+            self.chart.add_subplot(res.name, series_list, height=res.height, hlines=res.hlines)

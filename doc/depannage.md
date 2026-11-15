@@ -129,7 +129,7 @@ hauteur du graphique principal en déplaçant le séparateur.
 Le fichier `trading_matrix/ui/styles.qss` est chargé au démarrage. Vérifier son encodage
 UTF-8 et son chemin (`Path(__file__).parent / "styles.qss"`).
 
-## Problèmes d'indicateurs personnalisés
+## Problèmes d'indicateurs
 
 ### Mon indicateur n'apparaît pas dans la liste
 
@@ -276,8 +276,8 @@ python main.py
 ## Obtenir plus d'informations
 
 Les erreurs non interceptées s'affichent dans le terminal qui a lancé
-`python main.py`. Les erreurs de chargement d'indicateurs/stratégies perso y
-sont également imprimées (`[custom] ...`, `[strategies] ...`).
+`python main.py`. Les erreurs de chargement d'indicateurs/stratégies y
+sont également imprimées (`[indicators] ...`, `[strategies] ...`).
 
 Pour un test rapide sans interface :
 

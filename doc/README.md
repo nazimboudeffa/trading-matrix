@@ -9,7 +9,7 @@ Bienvenue dans la documentation du projet **Trading Matrix**, un visualiseur de 
 | [Installation](installation.md) | Prérequis, environnement virtuel, dépendances, lancement |
 | [Architecture](architecture.md) | Vue d'ensemble, organisation des dossiers, flux de données |
 | [Utilisation](utilisation.md) | Guide de l'interface, chargement des données, indicateurs, stratégies |
-| [Indicateurs](indicateurs.md) | Indicateurs intégrés et création d'indicateurs personnalisés |
+| [Indicateurs](indicateurs.md) | Indicateurs (tous dans `user_indicators/`) et création d'indicateurs |
 | [Stratégies](strategies.md) | Moteur de stratégies, API `BaseStrategy`, création de stratégies perso |
 | [Stratégie Price Action](strategie-price-action.md) | Fonctionnement détaillé de la stratégie générale |
 | [Analyse IA](analyse-ia.md) | Analyse des signaux avec Ollama : installation, fenêtre, prompt |

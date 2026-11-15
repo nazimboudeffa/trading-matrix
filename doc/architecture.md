@@ -8,28 +8,29 @@ graph TD
     B --> C[trading_matrix/ui/main_window.py<br/>MainWindow]
     C --> D[trading_matrix/ui/toolbar.py]
     C --> E[trading_matrix/ui/chart_widget.py]
-    C --> F[trading_matrix/ui/sidebar.py<br/>indicateurs intégrés]
-    C --> G[trading_matrix/ui/custom_panel.py<br/>indicateurs perso]
+    C --> F[trading_matrix/ui/indicator_panel.py<br/>indicateurs]
     C --> H[trading_matrix/ui/strategy_panel.py<br/>stratégies]
     C --> I[trading_matrix/ui/strategy_table.py<br/>signaux]
     C --> T[trading_matrix/ui/markets_panel.py<br/>panneau Marchés]
-    C --> U[trading_matrix/ui/symbol_completer.py<br/>autocomplétion]
+    C --> SC[trading_matrix/ui/symbol_completer.py<br/>autocomplétion]
 
     E --> J[trading_matrix/charts/markers.py]
-    G --> K[trading_matrix/indicators/custom_registry.py]
-    K --> L[trading_matrix/indicators/executor.py]
+    F --> K[trading_matrix/indicators/registry.py]
+    K --> L[trading_matrix/indicators/loader.py]
+    L --> IND[user_indicators/*.py]
     H --> M[trading_matrix/strategies/registry.py]
     M --> N[trading_matrix/strategies/engine.py]
-    N --> O[trading_matrix/strategies/price_action/*]
+    M --> STR[user_strategies/*.py]
+    N --> O[trading_matrix/strategies/price_action/*<br/>bibliothèque]
     C --> P[trading_matrix/data/openbb_client.py]
     P --> Q[OpenBB]
     P --> R[yfinance]
     P --> S[trading_matrix/data/demo.py]
-    T --> V[trading_matrix/data/markets.py]
-    U --> W[trading_matrix/data/symbol_search.py]
-    W --> V
-    V --> X[Wikipédia + cache + seeds]
-    W --> R
+    T --> MK[trading_matrix/data/markets.py]
+    SC --> SS[trading_matrix/data/symbol_search.py]
+    SS --> MK
+    SS --> R
+    MK --> X[Wikipédia + cache + seeds]
 ```
 
 ## Organisation des dossiers
@@ -54,26 +55,23 @@ trading-matrix/
 │   ├── charts/
 │   │   └── markers.py          # Dessin des signaux (flèches, zones, SL/TP)
 │   ├── indicators/
-│   │   ├── manager.py          # SMA, EMA, RSI, MACD, Bollinger
-│   │   ├── base.py             # PlotItem, IndicatorResult
-│   │   ├── executor.py         # Chargement des modules perso
-│   │   └── custom_registry.py  # Registre des indicateurs perso
+│   │   ├── base.py             # PlotItem, IndicatorResult, ParamSpec, normalize_params
+│   │   ├── loader.py           # Chargement des modules d'indicateurs
+│   │   └── registry.py         # Registre des indicateurs (IndicatorRegistry)
 │   ├── strategies/
 │   │   ├── base.py             # Side, Signal, StrategyContext, BaseStrategy
 │   │   ├── utils.py            # ATR, patterns élémentaires
-│   │   ├── registry.py         # Registre built-in + perso
+│   │   ├── registry.py         # Registre des stratégies (user_strategies/)
 │   │   ├── engine.py           # Exécution + filtrage des signaux
-│   │   └── price_action/
+│   │   └── price_action/       # Bibliothèque price action réutilisable
 │   │       ├── structure.py    # Swings, tendance, BOS/CHOCH
 │   │       ├── patterns.py     # Réactions price action
-│   │       ├── zones.py        # Order Blocks
-│   │       └── general.py      # Stratégie Price Action Général
+│   │       └── zones.py        # Order Blocks
 │   ├── ui/
 │   │   ├── main_window.py      # Fenêtre principale + docks
 │   │   ├── toolbar.py          # Symbole / intervalle / période
 │   │   ├── chart_widget.py     # Chandeliers, volume, crosshair, sous-graphiques
-│   │   ├── sidebar.py          # Panneau indicateurs intégrés
-│   │   ├── custom_panel.py     # Panneau indicateurs perso
+│   │   ├── indicator_panel.py  # Panneau unique des indicateurs (user_indicators/)
 │   │   ├── indicator_editor.py # Éditeur de code intégré
 │   │   ├── strategy_panel.py   # Panneau stratégies + filtres
 │   │   ├── strategy_table.py   # Tableau des signaux + bouton d'analyse IA
@@ -87,8 +85,8 @@ trading-matrix/
 │   ├── test_markets.py
 │   └── test_symbol_search.py
 ├── pytest.ini                  # Configuration pytest (pythonpath)
-├── user_indicators/            # Indicateurs personnalisés
-├── user_strategies/            # Stratégies personnalisées
+├── user_indicators/            # Tous les indicateurs (défaut + perso)
+├── user_strategies/            # Toutes les stratégies (défaut + perso)
 ├── doc/                        # Cette documentation
 └── assets/icons/
 ```
@@ -148,10 +146,12 @@ MarketsPanel.reload()
 ### Indicateurs
 
 ```text
-IndicatorPanel.indicatorsChanged(cfg)
-   └─> MainWindow.apply_indicators(cfg)
-         └─> IndicatorManager.sma/ema/rsi/macd/bollinger()
-         └─> ChartWidget.add_overlay() / add_bollinger() / add_subplot()
+IndicatorPanel.indicatorsChanged([(id, params), ...])
+   └─> MainWindow.apply_indicators(selection)
+         └─> IndicatorRegistry.compute(id, df, params)
+               └─> importlib charge user_indicators/<id>.py
+               └─> mod.compute(df, **params) -> IndicatorResult | dict
+         └─> ChartWidget.add_overlay() / add_subplot()
 ```
 
 ### Stratégies
@@ -166,17 +166,6 @@ StrategyPanel.analyzeRequested(id, params, filters)
          └─> charts.markers.draw_signals(chart, signals)
 ```
 
-### Indicateurs personnalisés
-
-```text
-CustomIndicatorPanel.applyCustom(id, params)
-   └─> MainWindow.apply_custom_indicator()
-         └─> CustomRegistry.compute(id, df, params)
-               └─> importlib charge user_indicators/<id>.py
-               └─> mod.compute(df, **params) -> IndicatorResult | dict
-         └─> ChartWidget (overlay ou subplot)
-```
-
 ## Conventions
 
 - **Coordonnées X** des graphiques : index ordinal de la bougie (`0..n-1`),
@@ -186,7 +175,8 @@ CustomIndicatorPanel.applyCustom(id, params)
 - **Séparation UI / logique** : les calculs (indicateurs, stratégies) sont
   indépendants de Qt et testables en dehors de l'interface.
 - **Extensibilité** : les dossiers `user_indicators/` et
-  `user_strategies/` sont scannés dynamiquement.
+  `user_strategies/` sont scannés dynamiquement. Le cœur du logiciel ne
+  contient aucune définition d'indicateur ni de stratégie.
 
 ## Threads et performances
 
