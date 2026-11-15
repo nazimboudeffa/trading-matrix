@@ -15,6 +15,7 @@ Bienvenue dans la documentation du projet **Trading Matrix**, un visualiseur de 
 | [Analyse IA](analyse-ia.md) | Analyse des signaux avec Ollama : installation, fenêtre, prompt |
 | [Référence API](api-reference.md) | Classes, fonctions et signatures principales |
 | [Dépannage](depannage.md) | Problèmes fréquents et solutions |
+| [Plan / Feuille de route](plan.md) | État du projet, priorités et feuille de route |
 
 ## En bref
 

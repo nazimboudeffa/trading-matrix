@@ -28,7 +28,8 @@ Visualiseur de graphiques de trading desktop, construit avec **PySide6**, **pyqt
 ## Documentation
 
 La documentation complète est disponible dans [`doc/`](doc/README.md) :
-installation, architecture, utilisation, indicateurs, stratégies et dépannage.
+installation, architecture, utilisation, indicateurs, stratégies, dépannage et
+[feuille de route](doc/plan.md).
 
 ## Installation
 
