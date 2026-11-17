@@ -248,7 +248,19 @@ class MainWindow(QMainWindow):
         self.status.showMessage("Signaux effacés")
 
     def focus_signal(self, sig) -> None:
+        """Met en évidence le signal cliqué et affiche ses niveaux dans la barre de statut."""
+        from trading_matrix.charts.markers import draw_signals
+
+        draw_signals(self.chart, self.signals, selected=sig)
         self.chart.focus_on_time(sig.time, span=80)
+
+        rr = sig.meta.get("rr")
+        statut = "En attente" if sig.meta.get("pending") else "Confirmé"
+        self.status.showMessage(
+            f"{statut} · {sig.side.value} {sig.confidence}% · entrée {sig.entry:.2f} "
+            f"· SL {sig.sl:.2f} · TP1 {sig.tp1:.2f}"
+            + (f" · R:R {rr}" if rr is not None else "")
+        )
 
     def clear_indicators(self) -> None:
         self.last_selection = None

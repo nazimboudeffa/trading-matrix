@@ -403,7 +403,9 @@ class ChartWidget(QWidget):
             return
         half = max(5, span // 2)
         lo = max(0, idx - half)
-        hi = min(self.n - 1, idx + half)
+        # `self.n` et non `n - 1` : garde une barre de marge à droite quand le
+        # signal sélectionné est sur la dernière bougie.
+        hi = min(self.n, idx + half)
         if hi <= lo:
-            hi = min(self.n - 1, lo + 10)
+            hi = min(self.n, lo + 10)
         self.price_plot.setXRange(lo, hi, padding=0)

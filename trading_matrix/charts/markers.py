@@ -7,6 +7,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QGraphicsRectItem
 
 from trading_matrix.core.config import PALETTE
+from trading_matrix.strategies.base import Signal
 
 
 def clear_signal_items(chart) -> None:
@@ -17,16 +18,17 @@ def clear_signal_items(chart) -> None:
             pass
     chart.signal_items = []
 
-    # Les signaux à venir étendent la vue à droite : on rétablit la plage normale.
+    # Rétablit la plage normale après l'affichage d'éventuels signaux.
     if getattr(chart, "df", None) is not None and getattr(chart, "n", 0):
         chart.price_plot.setXRange(0, chart.n, padding=0.02)
 
 
-def draw_signals(chart, signals) -> None:
-    """Dessine flèches, zones, SL/TP et labels pour une liste de Signal.
+def draw_signals(chart, signals, *, selected: Signal | None = None) -> None:
+    """Dessine flèches, zones et SL/TP pour une liste de Signal.
 
-    Les signaux à venir (``meta["pending"]``) sont projetés dans une marge à
-    droite de la dernière bougie, avec un marqueur creux et un trait pointillé.
+    Le graphique reste sobre : pas de texte permanent, les détails sont
+    accessibles au survol. Si ``selected`` est fourni, ce signal est mis en
+    évidence (marqueur agrandi, zone renforcée et repère vertical).
     """
     clear_signal_items(chart)
     if chart.df is None or not signals:
@@ -38,16 +40,16 @@ def draw_signals(chart, signals) -> None:
     date_map = {ts: idx for idx, ts in enumerate(dates)}
     n = len(dates)
     last_range = float(chart.df["High"].iloc[-1] - chart.df["Low"].iloc[-1])
-    pending_offset = 0
 
     for sig in signals:
         is_pending = bool(sig.meta.get("pending"))
+        is_selected = selected is not None and sig is selected
 
         if is_pending:
-            # Position fictive à droite de la dernière bougie (marge « futur »).
-            x = n - 1 + 3 + 4 * pending_offset
-            pending_offset += 1
+            # Le plan d'entrée est attaché à la dernière bougie, pas à une
+            # position fictive dans le futur.
             idx = n - 1
+            x = float(idx)
         else:
             idx = date_map.get(sig.time)
             if idx is None:
@@ -66,11 +68,20 @@ def draw_signals(chart, signals) -> None:
             color = PALETTE["up"] if is_long else PALETTE["down"]
         y = float(sig.entry)
 
+        # Détails au survol : le graphique reste lisible même avec beaucoup de signaux.
+        rr = sig.meta.get("rr")
+        rr_txt = f" · R:R {rr:.2f}" if isinstance(rr, (int, float)) and np.isfinite(rr) else ""
+        tip = (
+            f"{'À VENIR' if is_pending else 'DÉCLENCHÉ'} {sig.side.value} · {sig.confidence}%{rr_txt}\n"
+            f"Entrée {sig.entry:.2f} · SL {sig.sl:.2f} · TP1 {sig.tp1:.2f}\n"
+            f"{sig.setup_type}"
+        )
+
         # ---- Zone (bande horizontale autour du signal)
         if sig.zone_price_low is not None and sig.zone_price_high is not None:
             if is_pending:
-                x1 = max(0, n - 1 - 8)
-                x2 = x + 12
+                x1 = max(0, n - 12)
+                x2 = float(n - 1)
             else:
                 x1 = max(0, idx - 12)
                 x2 = min(n - 1, idx + 18)
@@ -78,15 +89,16 @@ def draw_signals(chart, signals) -> None:
             top = float(sig.zone_price_high)
             rect = QGraphicsRectItem(x1, bottom, max(x2 - x1, 1), max(top - bottom, 1e-6))
             qc = QColor(color)
-            qc.setAlpha(35 if is_pending else 45)
+            qc.setAlpha(90 if is_selected else (35 if is_pending else 45))
             rect.setBrush(pg.mkBrush(qc))
             rect.setPen(
                 pg.mkPen(
                     color,
-                    width=1,
-                    style=Qt.PenStyle.DashLine if is_pending else Qt.PenStyle.SolidLine,
+                    width=2 if is_selected else 1,
+                    style=Qt.PenStyle.SolidLine if is_selected or not is_pending else Qt.PenStyle.DashLine,
                 )
             )
+            rect.setToolTip(tip)
             chart.price_plot.addItem(rect)
             chart.signal_items.append(rect)
 
@@ -102,42 +114,43 @@ def draw_signals(chart, signals) -> None:
                 [x],
                 [y],
                 symbol="d",
-                size=13,
+                size=18 if is_selected else 13,
                 brush=pg.mkBrush(0, 0, 0, 0),
-                pen=pg.mkPen(color, width=1.6),
+                pen=pg.mkPen(color, width=2.6 if is_selected else 1.6),
             )
+            marker.setToolTip(tip)
             chart.price_plot.addItem(marker)
             chart.signal_items.append(marker)
-            label_y = y - offset if is_long else y + offset
-            label_text = f"{sig.side.value[:1]} {sig.confidence}% · à venir"
         else:
             arrow = pg.ArrowItem(
                 angle=90 if is_long else -90,
                 tipAngle=28,
-                headLen=14,
+                headLen=18 if is_selected else 14,
                 brush=pg.mkBrush(color),
-                pen=pg.mkPen(color),
+                pen=pg.mkPen(color, width=2 if is_selected else 1),
             )
             arrow.setPos(x, y - offset if is_long else y + offset)
+            arrow.setToolTip(tip)
             chart.price_plot.addItem(arrow)
             chart.signal_items.append(arrow)
-            label_y = y - offset if is_long else y + offset
-            label_text = f"{sig.side.value[:1]} {sig.confidence}%"
 
-        # ---- Label
-        label = pg.TextItem(
-            label_text,
-            color=color,
-            anchor=(0.5, 1.2 if is_long else -0.2),
-        )
-        label.setPos(x, label_y)
-        chart.price_plot.addItem(label)
-        chart.signal_items.append(label)
+        # ---- Repère vertical pour le signal sélectionné dans la liste
+        if is_selected:
+            guide = pg.InfiniteLine(
+                pos=x,
+                angle=90,
+                pen=pg.mkPen(color, width=1.2, style=Qt.PenStyle.DashLine),
+            )
+            chart.price_plot.addItem(guide)
+            chart.signal_items.append(guide)
 
         # ---- SL / TP
         if is_pending:
-            end = x + 8
+            # Niveaux projetés sur les bougies disponibles, à gauche du signal.
+            start = max(0, x - 3)
+            end = x
         else:
+            start = x
             end = min(n - 1, idx + 25)
             if end <= idx:
                 end = min(n - 1, idx + 1)
@@ -150,17 +163,18 @@ def draw_signals(chart, signals) -> None:
         if sig.tp3 is not None:
             lines.append(("TP3", sig.tp3, "#81c784"))
 
-        for _name, price, line_color in lines:
+        for name, price, line_color in lines:
             item = pg.PlotDataItem(
-                [x, end],
+                [start, end],
                 [float(price), float(price)],
-                pen=pg.mkPen(line_color, width=1, style=Qt.PenStyle.DashLine),
+                pen=pg.mkPen(
+                    line_color,
+                    width=2 if is_selected else 1,
+                    style=Qt.PenStyle.SolidLine if is_selected else Qt.PenStyle.DashLine,
+                ),
             )
+            item.setToolTip(f"{name} {float(price):.2f}\n{tip}")
             chart.price_plot.addItem(item)
             chart.signal_items.append(item)
-
-    if pending_offset:
-        last_x = n - 1 + 3 + 4 * (pending_offset - 1)
-        chart.price_plot.setXRange(0, last_x + 10, padding=0.02)
 
     chart.price_plot.update()

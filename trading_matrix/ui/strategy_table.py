@@ -68,6 +68,7 @@ class SignalTable(QWidget):
         # Les widgets de cellule ne suivent pas le tri : on les replace après tri.
         header.sortIndicatorChanged.connect(self._schedule_ai_refresh)
 
+        self.table.cellClicked.connect(self._on_cell_clicked)
         self.table.cellDoubleClicked.connect(self._on_double_click)
         layout.addWidget(self.table)
 
@@ -153,7 +154,16 @@ class SignalTable(QWidget):
         self.signals = []
         self.table.setRowCount(0)
 
+    def _on_cell_clicked(self, row: int, col: int) -> None:
+        """Un simple clic sélectionne le signal et le met en évidence au graphique."""
+        if col == self.COL_AI:  # laisse le bouton IA gérer son propre clic
+            return
+        self._emit_signal_at(row)
+
     def _on_double_click(self, row: int, _col: int) -> None:
+        self._emit_signal_at(row)
+
+    def _emit_signal_at(self, row: int) -> None:
         if row < 0 or row >= self.table.rowCount():
             return
         item = self.table.item(row, 0)
