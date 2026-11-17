@@ -55,21 +55,22 @@ d'environnement `OLLAMA_HOST` (par exemple `http://192.168.1.20:11434`).
      `ollama serve`.
    - **Aucun modèle installé** → une fenêtre indique la commande
      `ollama pull ...`.
-4. Si tout est prêt, la fenêtre d'analyse s'ouvre. Lors de la **première**
-   utilisation, choisissez le modèle dans la liste puis cliquez sur
-   **Analyser avec l'IA**. Le modèle choisi est mémorisé : les fois suivantes,
-   l'analyse démarre automatiquement avec celui-ci.
+4. Si tout est prêt, la fenêtre d'analyse s'ouvre. Le modèle choisi est
+   mémorisé, mais **aucune analyse ne démarre automatiquement** : cliquez sur
+   **Analyser avec l'IA** (puis **Relancer l'analyse** pour une nouvelle
+   génération).
 
 Dans la fenêtre d'analyse :
 
 | Élément | Rôle |
 | --- | --- |
 | **Modèle Ollama** | Choix du modèle ; le dernier choix est mémorisé pour les analyses suivantes |
+| **Inclure les dernières actualités (OpenBB)** | Ajoute au prompt les actualités les plus récentes de l'actif. Le choix est mémorisé ; le chargement se fait en arrière-plan (repli `yfinance` si OpenBB ne répond pas) |
 | **Rafraîchir** | Rescanne les modèles installés (après un `ollama pull`) |
 | **Contexte envoyé à l'IA** | Texte exact transmis au modèle (signal, bougies, indicateurs) |
 | **Analyse de l'IA** | Réponse diffusée en direct, puis rendue en Markdown |
 | **Raisonnement du modèle** | Affiché si le modèle expose un raisonnement (*thinking*) |
-| **Analyser avec l'IA / Relancer** | Relance l'analyse avec le modèle sélectionné |
+| **Analyser avec l'IA / Relancer** | Démarre l'analyse avec le modèle sélectionné (aucun lancement automatique) |
 | **Arrêter** | Interrompt la génération en cours |
 | **Copier l'analyse** | Copie la réponse dans le presse-papiers |
 | **Fermer** | Ferme la fenêtre (interrompt la génération si nécessaire) |
@@ -98,6 +99,9 @@ Le prompt contient :
 - les raisons calculées par la stratégie et son score de confluence ;
 - les **40 dernières bougies** (OHLCV) **jusqu'à la dernière bougie disponible**
   (ou jusqu'à la bougie du signal pour un signal confirmé) ;
+- si la case **Inclure les dernières actualités (OpenBB)** est cochée, les
+  **5 actualités les plus récentes** de l'actif (titre, source, date UTC et
+  extrait court), récupérées via OpenBB puis, en repli, via `yfinance` ;
 - des indicateurs de contexte : ATR(14), SMA(20/50/200), plus haut/bas des
   20 dernières bougies, tendance de structure (swings 3/3), anatomie de la
   bougie de référence ;
@@ -111,10 +115,17 @@ Le prompt contient :
 > n'est transmise : le modèle ne peut pas « tricher » en connaissant la suite du
 > graphique. Pour un setup **En attente**, il évalue une condition qui n'est pas
 > encore réalisée.
+>
+> Les **actualités** sont optionnelles et correspondent aux articles les plus
+> récents **au moment de l'analyse** : elles peuvent donc être postérieures à la
+> bougie du signal. Le prompt le précise explicitement et demande au modèle de
+> les traiter comme un contexte actuel, jamais comme une information connue au
+> moment du signal.
 
 Les données sont envoyées uniquement au serveur Ollama configuré (localhost par
-défaut). Le prompt complet est toujours visible dans la fenêtre avant/après
-l'analyse.
+défaut). Les actualités sont, elles, récupérées auprès d'OpenBB / Yahoo Finance
+uniquement lorsque la case est cochée. Le prompt complet est toujours visible
+dans la fenêtre avant/après l'analyse.
 
 ## 4. Personnalisation du prompt
 
@@ -122,6 +133,8 @@ Le prompt est construit dans `trading_matrix/core/signal_context.py` :
 
 - `SYSTEM_PROMPT` : rôle, règles et format de réponse ;
 - `build_signal_prompt(...)` : contexte de marché et travail demandé ;
+- paramètres `news` / `news_error` : actualités optionnelles (objets `NewsItem`)
+  et message d'indisponibilité injectés dans le prompt ;
 - paramètre `candles` (40 par défaut) : nombre de bougies incluses.
 
 Pour un prompt plus court (modèles avec petite fenêtre de contexte), réduire

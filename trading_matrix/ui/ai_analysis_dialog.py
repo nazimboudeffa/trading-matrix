@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import threading
 
-from PySide6.QtCore import QSettings, Qt, QThread, QTimer
+from PySide6.QtCore import QSettings, Qt, QThread
 from PySide6.QtCore import Signal as QtSignal
 from PySide6.QtGui import QCloseEvent, QFont, QFontDatabase, QTextCursor
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QComboBox,
     QGroupBox,
     QHBoxLayout,
@@ -23,11 +24,14 @@ from PySide6.QtWidgets import (
 
 from trading_matrix.core import ollama_client
 from trading_matrix.core.signal_context import build_signal_prompt
+from trading_matrix.data.openbb_client import NewsItem, OpenBBClient
 from trading_matrix.strategies.base import Signal as TradeSignal
 
 _SETTINGS_ORG = "TradingMatrix"
 _SETTINGS_APP = "TradingMatrix"
 _SETTINGS_MODEL_KEY = "ai/model"
+_SETTINGS_NEWS_KEY = "ai/include_news"
+_NEWS_LIMIT = 5
 
 
 def _price(value: float | None) -> str:
@@ -72,6 +76,26 @@ class _OllamaWorker(QThread):
                 self.failed.emit(str(exc))
 
 
+class _NewsWorker(QThread):
+    """Récupère les dernières actualités hors du thread UI."""
+
+    loaded = QtSignal(int, object, str)  # generation, list[NewsItem], erreur
+
+    def __init__(self, symbol: str, limit: int, generation: int, parent=None):
+        super().__init__(parent)
+        self._symbol = symbol
+        self._limit = limit
+        self._generation = generation
+
+    def run(self) -> None:
+        try:
+            items = OpenBBClient().get_news(self._symbol, limit=self._limit)
+        except Exception as exc:  # noqa: BLE001 - message affiché dans la fenêtre
+            self.loaded.emit(self._generation, [], str(exc))
+            return
+        self.loaded.emit(self._generation, items, "")
+
+
 class AIAnalysisDialog(QWidget):
     """Fenêtre séparée : contexte du signal, choix du modèle, réponse de l'IA."""
 
@@ -94,6 +118,7 @@ class AIAnalysisDialog(QWidget):
         self.symbol = symbol or str(sig.meta.get("symbol") or "")
         self.timeframe = timeframe or str(sig.meta.get("timeframe") or "")
         self.strategy_name = strategy_name or str(sig.meta.get("strategy_name") or "")
+        self._strategy_description = strategy_description
         self._status = status or ollama_client.get_status()
         self._prompt = build_signal_prompt(
             sig,
@@ -105,6 +130,10 @@ class AIAnalysisDialog(QWidget):
         )
 
         self._worker: _OllamaWorker | None = None
+        self._news_worker: _NewsWorker | None = None
+        self._news_generation = 0
+        self._news: list[NewsItem] = []
+        self._news_error = ""
         self._content = ""
         self._thinking = ""
         self._error = ""
@@ -116,10 +145,12 @@ class AIAnalysisDialog(QWidget):
         self.resize(1000, 840)
         self._build_ui()
         self._populate_models(self._status)
-        self._autostart_timer = QTimer(self)
-        self._autostart_timer.setSingleShot(True)
-        self._autostart_timer.timeout.connect(self._autostart)
-        self._autostart_timer.start(150)
+        if self._load_news_setting():
+            self.news_check.setChecked(True)
+        else:
+            self._set_status(
+                "Prêt. Cliquez sur « Analyser avec l'IA » pour lancer l'analyse."
+            )
 
     # ------------------------------------------------------------------ UI
     def _window_title(self) -> str:
@@ -182,13 +213,25 @@ class AIAnalysisDialog(QWidget):
         self.models_hint.setWordWrap(True)
         layout.addWidget(self.models_hint)
 
+        news_row = QHBoxLayout()
+        self.news_check = QCheckBox("Inclure les dernières actualités (OpenBB)")
+        self.news_check.setToolTip(
+            "Ajoute au contexte les actualités les plus récentes de l'actif via "
+            "OpenBB (repli yfinance). Elles peuvent être postérieures à la bougie "
+            "du signal : le prompt le précise au modèle."
+        )
+        self.news_check.toggled.connect(self._on_news_toggled)
+        news_row.addWidget(self.news_check)
+        news_row.addStretch(1)
+        layout.addLayout(news_row)
+
         splitter = QSplitter(Qt.Orientation.Vertical, self)
 
         prompt_group = QGroupBox("Contexte envoyé à l'IA")
         prompt_layout = QVBoxLayout(prompt_group)
         prompt_note = QLabel(
-            "Texte exact transmis au modèle (aucune donnée future, uniquement les "
-            "bougies disponibles)."
+            "Texte exact transmis au modèle (bougies jusqu'à la dernière disponible ; "
+            "actualités OpenBB uniquement si l'option est cochée)."
         )
         prompt_note.setObjectName("aiHint")
         prompt_note.setWordWrap(True)
@@ -289,7 +332,14 @@ class AIAnalysisDialog(QWidget):
 
     def _update_start_button(self) -> None:
         has_model = bool(self.model_combo.currentText().strip())
-        self.btn_analyze.setEnabled(has_model and self._worker is None)
+        news_pending = (
+            getattr(self, "news_check", None) is not None
+            and self.news_check.isChecked()
+            and self._news_worker is not None
+        )
+        button = getattr(self, "btn_analyze", None)
+        if button is not None:
+            button.setEnabled(has_model and self._worker is None and not news_pending)
 
     def _refresh_models(self) -> None:
         if self._worker is not None:
@@ -305,27 +355,106 @@ class AIAnalysisDialog(QWidget):
         self._populate_models(status)
         self._set_status("Liste des modèles actualisée." if status.running else "Ollama injoignable.")
 
-    # ------------------------------------------------------------- analyse
-    def _autostart(self) -> None:
-        if self._worker is not None:
-            return
-        if not self.model_combo.currentText().strip():
-            self._set_status(
-                "Aucun modèle disponible. Installez-en un avec : ollama pull llama3.1",
-                error=True,
-            )
-            return
-        saved = str(QSettings(_SETTINGS_ORG, _SETTINGS_APP).value(_SETTINGS_MODEL_KEY, ""))
-        if saved:
-            # Modèle déjà choisi lors d'une analyse précédente : on relance directement.
-            self._start_analysis()
-            return
-        self._set_status(
-            "Choisissez un modèle puis cliquez sur « Analyser avec l'IA »."
+    # ------------------------------------------------------------ actualités
+    @staticmethod
+    def _load_news_setting() -> bool:
+        value = QSettings(_SETTINGS_ORG, _SETTINGS_APP).value(_SETTINGS_NEWS_KEY, 0)
+        try:
+            return bool(int(value or 0))
+        except (TypeError, ValueError):
+            return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+    @staticmethod
+    def _save_news_setting(enabled: bool) -> None:
+        QSettings(_SETTINGS_ORG, _SETTINGS_APP).setValue(
+            _SETTINGS_NEWS_KEY, 1 if enabled else 0
         )
 
+    def _rebuild_prompt(self) -> None:
+        """Reconstruit le prompt avec l'état courant des actualités."""
+        include_news = self.news_check.isChecked()
+        self._prompt = build_signal_prompt(
+            self.signal,
+            self.df,
+            symbol=self.symbol,
+            timeframe=self.timeframe,
+            strategy_name=self.strategy_name,
+            strategy_description=self._strategy_description,
+            news=self._news if include_news else None,
+            news_error=self._news_error if include_news else "",
+        )
+        if hasattr(self, "prompt_view"):
+            self.prompt_view.setPlainText(self._prompt.display_text())
+
+    def _on_news_toggled(self, checked: bool) -> None:
+        self._save_news_setting(checked)
+        self._news_generation += 1
+
+        if not checked:
+            self._news = []
+            self._news_error = ""
+            self._rebuild_prompt()
+            self._set_status("Actualités désactivées : contexte sans news.")
+            self._update_start_button()
+            return
+
+        if not self.symbol:
+            self._news = []
+            self._news_error = "symbole non renseigné"
+            self._rebuild_prompt()
+            self._set_status(
+                "Impossible de récupérer les actualités : symbole non renseigné.",
+                error=True,
+            )
+            self._update_start_button()
+            return
+
+        self._news = []
+        self._news_error = ""
+        self._set_status(
+            f"Récupération des actualités de « {self.symbol} » via OpenBB…"
+        )
+        self._start_news_fetch(self._news_generation)
+
+    def _start_news_fetch(self, generation: int) -> None:
+        worker = _NewsWorker(self.symbol, _NEWS_LIMIT, generation, self)
+        worker.loaded.connect(self._on_news_loaded)
+        worker.finished.connect(lambda w=worker: self._forget_news_worker(w))
+        self._news_worker = worker
+        self._update_start_button()
+        worker.start()
+
+    def _on_news_loaded(self, generation: int, items: object, error: str) -> None:
+        if generation != self._news_generation:
+            return
+        self._news = (
+            [item for item in items if isinstance(item, NewsItem)]
+            if isinstance(items, list)
+            else []
+        )
+        self._news_error = error
+        self._rebuild_prompt()
+
+        if error:
+            self._set_status(f"Actualités indisponibles : {error}", error=True)
+        elif self._news:
+            self._set_status(f"{len(self._news)} actualité(s) ajoutée(s) au contexte.")
+        else:
+            self._set_status("Aucune actualité récente trouvée pour ce symbole.")
+        self._update_start_button()
+
+    def _forget_news_worker(self, worker: _NewsWorker) -> None:
+        if self._news_worker is worker:
+            self._news_worker = None
+        worker.deleteLater()
+        self._update_start_button()
+
+    # ------------------------------------------------------------- analyse
     def _start_analysis(self) -> None:
         if self._worker is not None:
+            return
+        if self._news_worker is not None and self.news_check.isChecked():
+            self._set_status("Récupération des actualités en cours…")
             return
 
         model = self.model_combo.currentText().strip()
@@ -446,4 +575,11 @@ class AIAnalysisDialog(QWidget):
                 worker.terminate()
                 worker.wait(2000)
             self._worker = None
+        news_worker = self._news_worker
+        if news_worker is not None:
+            self._news_worker = None
+            news_worker.requestInterruption()
+            if not news_worker.wait(2000):
+                news_worker.terminate()
+                news_worker.wait(1000)
         super().closeEvent(event)

@@ -1,19 +1,27 @@
 """Construction du contexte et du prompt envoyés à l'IA pour un signal.
 
-Le contexte ne contient **que** les bougies disponibles jusqu'à la bougie du
-signal incluse : aucune donnée future n'est transmise au modèle.
+Les bougies transmises s'arrêtent à la bougie du signal incluse. Les actualités
+sont optionnelles et correspondent aux articles les plus récents **au moment de
+l'analyse** : elles peuvent donc être postérieures au signal, ce que le prompt
+précise explicitement au modèle.
 """
 
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import datetime
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 from trading_matrix.strategies.base import Side, Signal
 from trading_matrix.strategies.price_action.structure import find_swings, get_trend
 from trading_matrix.strategies.utils import atr
+
+if TYPE_CHECKING:
+    from trading_matrix.data.openbb_client import NewsItem
 
 DEFAULT_CANDLES = 40
 
@@ -30,6 +38,10 @@ Règles que tu dois respecter :
 information manque, dis-le explicitement au lieu de l'inventer.
 - N'invente aucun prix, aucune actualité, aucun indicateur et aucune donnée \
 macroéconomique.
+- Une section « Actualités récentes » peut être fournie : elle provient d'OpenBB \
+(ou de yfinance en repli), peut être incomplète, erronée ou postérieure au signal. \
+Traite-la comme un contexte actuel, jamais comme une information connue au moment \
+du signal, et n'invente aucune autre actualité.
 - Sois critique : un signal algorithmique n'est pas une opportunité par défaut.
 - Si le signal est marqué « EN ATTENTE », il s'agit d'un setup conditionnel non \
 déclenché : évalue la probabilité que sa condition se réalise et ne le traite \
@@ -148,6 +160,28 @@ def _moving_average(series: pd.Series, period: int) -> float | None:
     return _finite(value)
 
 
+def _news_line(item: "NewsItem") -> str:
+    """Formate une actualité en une ligne lisible par le modèle."""
+    published_at = getattr(item, "published_at", None)
+    parts: list[str] = []
+    if isinstance(published_at, datetime):
+        parts.append(f"{published_at:%Y-%m-%d %H:%M} UTC")
+
+    publisher = " ".join(str(getattr(item, "publisher", "") or "").split())
+    if publisher:
+        parts.append(publisher)
+
+    title = " ".join(str(getattr(item, "title", "") or "").split()) or "sans titre"
+    line = " — ".join([*parts, title])
+
+    summary = " ".join(str(getattr(item, "summary", "") or "").split())
+    if summary:
+        if len(summary) > 180:
+            summary = summary[:179].rstrip() + "…"
+        line += f" — {summary}"
+    return line
+
+
 def build_signal_prompt(
     sig: Signal,
     df: pd.DataFrame,
@@ -157,8 +191,16 @@ def build_signal_prompt(
     strategy_name: str = "",
     strategy_description: str = "",
     candles: int = DEFAULT_CANDLES,
+    news: Sequence[NewsItem] | None = None,
+    news_error: str = "",
 ) -> AIPrompt:
-    """Construit le prompt d'analyse d'un signal (données passées uniquement)."""
+    """Construit le prompt d'analyse d'un signal.
+
+    Les bougies s'arrêtent à la bougie du signal (aucun futur). Les actualités
+    sont optionnelles et peuvent être postérieures au signal : le prompt demande
+    au modèle de les traiter comme un contexte actuel, pas comme une information
+    disponible au moment du signal.
+    """
     symbol = symbol or str(sig.meta.get("symbol") or "")
     timeframe = timeframe or str(sig.meta.get("timeframe") or "")
     strategy_name = strategy_name or str(sig.meta.get("strategy_name") or "")
@@ -301,6 +343,30 @@ def build_signal_prompt(
                 f"corps {body / total * 100:.0f} % de la mèche totale, "
                 f"mèche haute {upper_wick / total * 100:.0f} %, "
                 f"mèche basse {lower_wick / total * 100:.0f} %"
+            )
+
+    if news is not None or news_error:
+        lines.extend(["", "## Actualités récentes", ""])
+        if news_error:
+            lines.append(
+                "Les actualités n'ont pas pu être récupérées "
+                f"({news_error}). N'en invente pas."
+            )
+        elif not news:
+            lines.append("Aucune actualité récente trouvée pour ce symbole.")
+        else:
+            lines.append(
+                "Actualités les plus récentes disponibles au moment de l'analyse "
+                "(source : OpenBB, repli yfinance si indisponible). Elles peuvent "
+                "être postérieures à la bougie du signal : traite-les comme un "
+                "contexte actuel, jamais comme une information connue au moment "
+                "du signal."
+            )
+            lines.append("")
+            lines.extend(f"- {_news_line(item)}" for item in news)
+            lines.append("")
+            lines.append(
+                "Utilise ces actualités si elles éclairent le setup ; sinon ignore-les."
             )
 
     if pending:
