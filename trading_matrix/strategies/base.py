@@ -41,6 +41,8 @@ class BaseStrategy:
     name: str = "Base Strategy"
     description: str = ""
     params_schema: dict[str, Any] = {}
+    # Ordre d'affichage dans la liste déroulante (plus petit = plus haut).
+    display_order: int = 100
 
     def analyze(self, ctx: StrategyContext) -> list[Signal]:
         raise NotImplementedError

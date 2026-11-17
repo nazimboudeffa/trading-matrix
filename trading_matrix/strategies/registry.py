@@ -20,6 +20,7 @@ class StrategyEntry:
     source: str = "user"  # toutes les stratégies vivent dans user_strategies/
     path: Path | None = None
     params_schema: dict[str, Any] = field(default_factory=dict)
+    display_order: int = 100
 
 
 def _load_user_module(path: Path) -> ModuleType:
@@ -70,9 +71,17 @@ class StrategyRegistry:
                     source="user",
                     path=py,
                     params_schema=inst.params_schema,
+                    display_order=inst.display_order,
                 )
 
         return self.items
+
+    def ordered_items(self) -> list[StrategyEntry]:
+        """Stratégies triées pour l'affichage (display_order, puis nom)."""
+        return sorted(
+            self.items.values(),
+            key=lambda entry: (entry.display_order, entry.name.casefold()),
+        )
 
     def get(self, sid: str) -> StrategyEntry | None:
         return self.items.get(sid)

@@ -23,6 +23,7 @@ from trading_matrix.strategies.utils import atr
 class SmaCrossover(BaseStrategy):
     id = "sma_crossover"
     name = "SMA 20/50 Crossover"
+    display_order = 10
     description = (
         "Croisement de moyennes mobiles avec SL/TP basés sur l'ATR. "
         "Analyse tout l'historique, score de confiance adaptatif et "

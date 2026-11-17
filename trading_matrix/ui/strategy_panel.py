@@ -116,8 +116,8 @@ class StrategyPanel(QWidget):
         self.registry.discover()
         self.strategy_combo.blockSignals(True)
         self.strategy_combo.clear()
-        for sid, entry in self.registry.items.items():
-            self.strategy_combo.addItem(entry.name, sid)
+        for entry in self.registry.ordered_items():
+            self.strategy_combo.addItem(entry.name, entry.id)
         self.strategy_combo.blockSignals(False)
         if current:
             idx = self.strategy_combo.findData(current)

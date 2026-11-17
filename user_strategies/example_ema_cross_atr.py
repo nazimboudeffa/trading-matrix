@@ -17,6 +17,7 @@ from trading_matrix.strategies.utils import atr
 class EmaCrossATR(BaseStrategy):
     id = "user_ema_cross_atr"
     name = "EMA Cross + ATR (exemple perso)"
+    display_order = 20
     description = (
         "Croisement EMA rapide/lente avec stop basé sur l'ATR. "
         "Exemple pédagogique de stratégie utilisateur."

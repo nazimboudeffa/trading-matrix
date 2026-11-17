@@ -15,6 +15,7 @@ class PriceActionGeneral(BaseStrategy):
 
     id = "pa_general"
     name = "Price Action Général"
+    display_order = 30
     description = (
         "Structure de marché (HH/HL, LH/LL), Order Blocks non mitigés et "
         "confirmation Price Action (engulfing, pinbar). Signaux avec SL/TP et score de confluence."
