@@ -253,8 +253,9 @@ print(len(signals))
 - `user_strategies/price_action_general.py` : la stratégie Price Action
   générale (`pa_general`), basée sur la structure de marché et les Order Blocks.
   Voir [Stratégie Price Action](strategie-price-action.md).
-- `user_strategies/example_ema_cross_atr.py` : un croisement EMA rapide/lente
-  avec SL basé sur l'ATR. Il sert de modèle complet et minimal.
+- `user_strategies/ema_crossover.py` : le croisement EMA rapide/lente
+  (`ema_crossover`), avec SL/TP basés sur l'ATR, score de confiance et
+  cooldown, sur le même modèle que la stratégie SMA.
 
 ## Limites actuelles
 

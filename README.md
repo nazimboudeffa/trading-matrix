@@ -87,7 +87,7 @@ stratégie Price Action générale (`pa_general`). Chaque fichier `.py` doit
 définir une classe héritant de `BaseStrategy` avec un `id` unique et une
 méthode `analyze(ctx) -> list[Signal]`. Voir `user_strategies/README.md`.
 
-Exemples fournis : `price_action_general.py` et `example_ema_cross_atr.py`.
+Stratégies fournies : `price_action_general.py`, `sma_crossover.py` et `ema_crossover.py`.
 
 ## Dépendances principales
 

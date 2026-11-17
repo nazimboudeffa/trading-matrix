@@ -48,10 +48,10 @@ Un **visualiseur de trading desktop local**, extensible et pédagogique :
 | Autocomplétion | Suggestions dès 2 caractères, navigation clavier, repli hors ligne |
 | Fenêtre Marchés | Indices (Wikipédia, cache 7 j, seeds) **+ forex** (Majeures / Mineures / Exotiques, listes embarquées), filtre, tri, bouton **Sélectionner** |
 | Indicateurs | Tous dans `user_indicators/` (SMA, EMA, Bollinger, RSI, MACD + exemple), panneau unifié, paramètres auto-générés, éditeur intégré |
-| Stratégies | Moteur + `user_strategies/` (`pa_general`, `example_ema_cross_atr`) |
+| Stratégies | Moteur + `user_strategies/` (`pa_general`, `sma_crossover`, `ema_crossover`) |
 | Signaux | SL / TP1 / TP2 / TP3, R:R, score de confluence, **setups en attente**, tableau, navigation |
 | Analyse IA | Ollama local : statut, choix du modèle, fenêtre dédiée, streaming, **actualités OpenBB optionnelles** |
-| Qualité | 34 tests `pytest`, documentation complète dans `doc/` |
+| Qualité | 44 tests `pytest`, documentation complète dans `doc/` |
 
 ## 4. Feuille de route
 
