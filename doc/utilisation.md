@@ -162,6 +162,84 @@ Voir [Stratégies](strategies.md).
 - Filtres d'affichage : sens, confiance minimale, R:R minimal, nombre max
 - **Analyser le graphique**, **Effacer les signaux**, **Rafraîchir stratégies**
 
+### Profil daytrading (avec les paramètres existants)
+
+Il n'existe pas de case « daytrading » dans l'interface. Le principe est de
+demander des données **intraday**, puis de régler la stratégie et les filtres
+pour ne garder que des signaux courts et peu nombreux. Tout se fait avec les
+contrôles déjà présents, sans modifier le code ni l'interface.
+
+> L'application n'a pas de notion de séance : elle ne connaît ni les horaires
+> d'ouverture/clôture, ni la clôture forcée avant la fin de journée. Le
+> « daytrading » est donc un **profil de réglage**, pas une règle de gestion
+> d'ordre : la décision de sortir avant la clôture reste manuelle.
+
+#### 1. Données (barre d'outils)
+
+| Contrôle | Réglage suggéré | Remarque |
+| --- | --- | --- |
+| **Intervalle** | `1m`, `5m` ou `15m` (`30m` / `1h` pour moins de bruit) | Éviter `4h` et plus : au-delà, un signal peut couvrir plusieurs jours. |
+| **Période** | `1d` ou `5d` (`1mo` au plus) | Les historiques intraday sont limités par le provider ; une période trop longue peut être tronquée ou échouer. |
+
+Clique sur **Charger** avant de lancer l'analyse.
+
+#### 2. Paramètres de la stratégie
+
+**Price Action Général (`pa_general`)** — points de départ :
+
+| Paramètre (libellé de l'interface) | Réglage suggéré | Effet recherché |
+| --- | --- | --- |
+| **Tendance requise** | Cocher | Écarte les setups contraires à la structure. |
+| **Signaux à venir** | Décocher, ou **Max signaux à venir** = 1 et **Distance max (×ATR)** = 1–2 | Un plan conditionnel peut rester en attente d'un jour à l'autre. |
+| **Cooldown (bougies)** | 5–10 sur du 5m (soit 25–50 min) | Limite le nombre de signaux et le sur-trading. |
+| **Confiance min.** | 60–70 | Garde les confluences les plus fortes. |
+| **R:R minimum** | 1,2–1,5 | Évite des cibles trop proches du bruit intraday. |
+| **Swings gauche** / **Swings droite** | 2–3 | Structure plus réactive sur une unité de temps courte. |
+| **Lookback zones** | 30–60 | Order Blocks plus récents. |
+| **Recalcul structure (bougies)** | 3–5 | Suit plus vite les changements de structure. |
+| **Accepter les mèches au-delà de la zone** | Décocher | Zones de réaction plus strictes. |
+| **Marge du stop (×ATR)** / **Tolérance de zone (×ATR)** | Valeurs basses (0,15–0,25 / 0,25–0,5) | Stop plus serré et réaction exigée plus près de la zone, donc des signaux plus exigeants. |
+
+**SMA / EMA crossover** — si tu préfères un suivi de tendance plus simple :
+
+- **SMA/EMA rapide** 9–12 et **lente** 21–26 ;
+- **Filtre de tendance** coché (il est décoché par défaut) ;
+- **Stop (×ATR)** 1,0–1,5 et **TP1 (×ATR)** 1,5–2,5 au lieu de 3,0, pour des
+  objectifs plus proches ;
+- **Cooldown (bougies)** 5–10 et **Fenêtre de pente** 3–5.
+
+#### 3. Filtres d'affichage (communs à toutes les stratégies)
+
+| Filtre | Réglage suggéré | Remarque |
+| --- | --- | --- |
+| **Sens** | `LONG` ou `SHORT` selon le biais de la séance | `Toutes` laisse les deux sens. |
+| **Confiance min. (%)** | 60–70 | S'ajoute au **Confiance min.** de la stratégie : les deux seuils sont appliqués. |
+| **R:R min.** | 1,2–1,5 | Cumulatif avec le **R:R minimum** de la stratégie. |
+| **Max signaux** | 5–10 | `Illimité` (0) peut donner trop de décisions sur 1m/5m. |
+
+Clique ensuite sur **Analyser le graphique** et vérifie la colonne **Heure** du
+tableau : elle indique la bougie de référence du signal.
+
+#### 4. Points de vigilance
+
+- **Aucun filtre horaire** : l'application ne vérifie pas « 9h30–16h00 » ni les
+  horaires des autres places.
+- **Fuseaux horaires** : `openbb_client.py` convertit les dates avec
+  `pd.to_datetime` sans fuseau explicite. L'heure affichée peut donc être locale
+  ou UTC selon la source ; vérifie-la sur un symbole connu avant de raisonner en
+  heure de séance.
+- Un setup **En attente** ou un TP peut rester pertinent sur plusieurs séances :
+  ce profil ne clôture rien automatiquement.
+- **Pas de backtest intégré** : ces valeurs sont des points de départ, pas un
+  réglage validé statistiquement. Ajuste-les après observation.
+- **Aucune persistance** : les réglages sont à refaire après un redémarrage.
+
+#### Revenir à un profil swing
+
+Repasser en `1h` / `4h` et `1mo` / `3mo`, réactiver **Signaux à venir**, augmenter
+**Lookback zones** (60–120) et **Cooldown**, puis relâcher les filtres
+(**Confiance min.** 50, **Max signaux** `Illimité`).
+
 ## Tableau des signaux
 
 Chaque ligne correspond à un `Signal` :
