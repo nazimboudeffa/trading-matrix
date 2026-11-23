@@ -64,9 +64,10 @@ class MarketDataError(RuntimeError):
 class Market:
     """Description d'un marché et de sa source.
 
-    Un marché est alimenté soit par une page Wikipédia (indices), soit par une
-    liste **statique** embarquée (forex) : dans ce cas ``static_instruments``
-    est renseigné et aucune requête réseau n'est effectuée.
+    Un marché est alimenté soit par une page Wikipédia (constituants d'indices),
+    soit par une liste **statique** embarquée (cotations d'indices, forex) : dans
+    ce cas ``static_instruments`` est renseigné et aucune requête réseau n'est
+    effectuée.
     """
 
     id: str
@@ -158,6 +159,58 @@ _INDEX_MARKETS: tuple[Market, ...] = (
 
 
 # ---------------------------------------------------------------------------
+# Indices : cotations des indices eux-mêmes (liste statique embarquée)
+# ---------------------------------------------------------------------------
+
+# (symbole yfinance, nom, place, région) — contrairement aux marchés ci-dessus,
+# ces instruments sont les indices et non leurs constituants.
+INDEX_QUOTES: tuple[tuple[str, str, str, str], ...] = (
+    ("^FCHI", "CAC 40", "Euronext Paris", "Europe"),
+    ("^GDAXI", "DAX 40", "Xetra", "Europe"),
+    ("FTSEMIB.MI", "FTSE MIB", "Borsa Italiana", "Europe"),
+    ("^FTSE", "FTSE 100", "Londres", "Europe"),
+    ("^STOXX50E", "EURO STOXX 50", "Euronext", "Europe"),
+    ("^IBEX", "IBEX 35", "Madrid", "Europe"),
+    ("^AEX", "AEX", "Amsterdam", "Europe"),
+    ("^SSMI", "Swiss Market Index", "SIX Swiss Exchange", "Europe"),
+    ("^BFX", "BEL 20", "Bruxelles", "Europe"),
+    ("^GSPC", "S&P 500", "NYSE", "Amériques"),
+    ("^NDX", "Nasdaq 100", "Nasdaq", "Amériques"),
+    ("^DJI", "Dow Jones Industrial Average", "NYSE", "Amériques"),
+    ("^RUT", "Russell 2000", "NYSE", "Amériques"),
+    ("^GSPTSE", "S&P/TSX Composite", "Toronto", "Amériques"),
+    ("^N225", "Nikkei 225", "Tokyo", "Asie-Pacifique"),
+    ("^HSI", "Hang Seng", "Hong Kong", "Asie-Pacifique"),
+    ("000001.SS", "Shanghai Composite", "Shanghai", "Asie-Pacifique"),
+    ("^KS11", "KOSPI", "Séoul", "Asie-Pacifique"),
+    ("^AXJO", "S&P/ASX 200", "Sydney", "Asie-Pacifique"),
+)
+
+
+def _index_instrument(symbol: str, name: str, exchange: str, region: str) -> Instrument:
+    return Instrument(
+        symbol=symbol,
+        name=name,
+        exchange=exchange,
+        sector=region,
+        market="Indices",
+    )
+
+
+INDEX_QUOTES_MARKETS: tuple[Market, ...] = (
+    Market(
+        "indices_quotes",
+        "Indices · Cotations",
+        category="Indices",
+        static_instruments=tuple(
+            _index_instrument(symbol, name, exchange, region)
+            for symbol, name, exchange, region in INDEX_QUOTES
+        ),
+    ),
+)
+
+
+# ---------------------------------------------------------------------------
 # Forex : listes statiques embarquées (aucune source réseau)
 # ---------------------------------------------------------------------------
 
@@ -240,8 +293,9 @@ FOREX_MARKETS: tuple[Market, ...] = tuple(
     for market_id, subgroup, pairs in FOREX_GROUPS
 )
 
-#: Catalogue complet : indices (réseau) puis forex (statique).
-MARKETS: tuple[Market, ...] = _INDEX_MARKETS + FOREX_MARKETS
+#: Catalogue complet : constituants d'indices (réseau), cotations d'indices
+#: (statique) puis forex (statique).
+MARKETS: tuple[Market, ...] = _INDEX_MARKETS + INDEX_QUOTES_MARKETS + FOREX_MARKETS
 
 
 def list_markets() -> tuple[Market, ...]:

@@ -96,7 +96,8 @@ double-clic dans la liste le met à jour directement.
 
 | Groupe | Contenu | Source |
 | --- | --- | --- |
-| **Indices** | CAC 40, DAX 40, FTSE MIB, FTSE 100, Euro Stoxx 50, S&P 500, Nasdaq 100 | Wikipédia |
+| **Indices · Cotations** | CAC 40 (`^FCHI`), DAX (`^GDAXI`), S&P 500 (`^GSPC`), Nikkei (`^N225`)… | Liste embarquée |
+| **Indices** | Constituants du CAC 40, DAX 40, FTSE MIB, FTSE 100, Euro Stoxx 50, S&P 500, Nasdaq 100 | Wikipédia |
 | **Forex · Majeures** | EUR/USD, USD/JPY, GBP/USD, USD/CHF, USD/CAD, AUD/USD, NZD/USD | Liste embarquée |
 | **Forex · Mineures** | Croisements sans dollar (EUR/GBP, GBP/JPY, AUD/NZD…) | Liste embarquée |
 | **Forex · Exotiques** | Paires avec devises émergentes (USD/TRY, EUR/ZAR…) | Liste embarquée |
@@ -110,13 +111,16 @@ double-clic dans la liste le met à jour directement.
   l'intervalle et la période courants. Un **double-clic** sur une ligne produit
   le même effet.
 - **Actualiser** : force la récupération depuis Wikipédia (le cache frais est
-  ignoré). Sans effet sur le forex, dont les listes sont embarquées.
+  ignoré). Sans effet sur les cotations d'indices et le forex, dont les listes
+  sont embarquées.
 - **Statut** en bas : provenance (`Réseau`, `Cache`, `Hors ligne`, `Intégré`),
   nombre de titres et âge du cache.
 
-Les paires forex suivent la convention yfinance (`EURUSD=X`) : un double-clic
-charge directement la paire correspondante. Elles apparaissent aussi dans
-l'autocomplétion du champ Symbole, même hors ligne.
+Les indices cotés suivent les symboles yfinance (`^FCHI`, `^GSPC`…) : un
+double-clic charge directement le graphique de l'indice, et non celui de ses
+constituants. Les paires forex suivent la convention `EURUSD=X`. Ces
+instruments apparaissent aussi dans l'autocomplétion du champ Symbole, même
+hors ligne.
 
 Fermer la fenêtre ne fait que la masquer : le bouton **Marchés** la réaffiche
 dans son état précédent.

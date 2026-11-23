@@ -318,3 +318,33 @@ def test_forex_groups_cover_majors_minors_exotics():
 
     majors = markets.get_market("forex_majors")
     assert len(majors.static_instruments) == 7
+
+
+# --------------------------------------------------------------------------- cotations d'indices
+
+def test_index_quotes_are_static_and_offline(isolated_storage, monkeypatch):
+    def boom(market):
+        raise AssertionError("un marché statique ne doit pas appeler le réseau")
+
+    monkeypatch.setattr(markets, "_fetch_from_network", boom)
+
+    snapshot = markets.fetch_market("indices_quotes")
+    assert snapshot.source == "static"
+    symbols = [instrument.symbol for instrument in snapshot.instruments]
+    assert {"^FCHI", "^GSPC", "^NDX", "^N225"} <= set(symbols)
+    assert len(symbols) == len(set(symbols))
+    assert all(instrument.market == "Indices" for instrument in snapshot.instruments)
+    assert {instrument.sector for instrument in snapshot.instruments} <= {
+        "Europe",
+        "Amériques",
+        "Asie-Pacifique",
+    }
+
+
+def test_index_quotes_are_listed_and_searchable_offline(isolated_storage):
+    market = markets.get_market("indices_quotes")
+    assert market in markets.list_markets()
+    assert market.category == "Indices"
+
+    assert markets.search_local("^gspc")[0].symbol == "^GSPC"
+    assert markets.search_local("nikkei")[0].symbol == "^N225"
