@@ -23,15 +23,16 @@ Constantes globales.
 | `USER_STRATEGIES_DIR` | `Path` | `PROJECT_ROOT/user_strategies` |
 | `PALETTE` | `dict[str, str]` | Couleurs du thème (`bg`, `up`, `down`, `text`...) |
 
-## `trading_matrix.core.ollama_client`
+## `trading_matrix.core.llama_client`
 
-Client de l'API locale [Ollama](https://ollama.com) (analyse IA).
+Client de l'API locale compatible OpenAI de [Llama App](https://llama.app)
+(llama.cpp), utilisé pour l'analyse IA.
 
 ```python
-class OllamaError(RuntimeError)
+class LlamaError(RuntimeError)
 
 @dataclass
-class OllamaStatus:
+class LlamaStatus:
     installed: bool
     running: bool
     models: list[str] = []
@@ -44,20 +45,22 @@ class OllamaStatus:
 def base_url() -> str
 def find_executable() -> str | None
 def fetch_models(timeout: float = 4.0) -> list[str]
-def get_status(timeout: float = 2.5) -> OllamaStatus
+def get_status(timeout: float = 2.5) -> LlamaStatus
 def chat_stream(
     model: str,
     messages: list[dict[str, str]],
     *,
     temperature: float = 0.3,
-    num_ctx: int = 8192,
     timeout: tuple[float, float | None] = (5.0, 600.0),
     stop_event: threading.Event | None = None,
 ) -> Iterator[tuple[str, str]]
 ```
 
 `chat_stream` diffuse des tuples `(kind, texte)` où `kind` vaut `"content"` ou
-`"thinking"`. L'URL du serveur peut être changée avec `OLLAMA_HOST`.
+`"thinking"` (champ `reasoning_content` de llama.cpp). L'URL du serveur peut
+être changée avec `LLAMA_HOST` (par défaut `http://127.0.0.1:9931`) et un
+éventuel `--api-key` avec `LLAMA_API_KEY`. La taille du contexte se règle côté
+serveur avec `llama serve -c N`.
 
 ## `trading_matrix.core.signal_context`
 
@@ -456,13 +459,13 @@ class AIAnalysisDialog(QWidget):
         timeframe: str = "",
         strategy_name: str = "",
         strategy_description: str = "",
-        status: ollama_client.OllamaStatus | None = None,
+        status: llama_client.LlamaStatus | None = None,
         parent=None,
     )
 ```
 
 Fenêtre indépendante : affiche le prompt exact (`prompt_view`), permet de
-choisir le modèle Ollama, diffuse la réponse dans `answer` et propose
+choisir le modèle Llama, diffuse la réponse dans `answer` et propose
 **Arrêter** / **Copier l'analyse**. L'analyse démarre automatiquement si un
 modèle a déjà été utilisé (mémorisé via `QSettings`) ; sinon l'utilisateur
 choisit le modèle puis lance l'analyse.
@@ -484,7 +487,7 @@ Attributs notables : `current_df`, `current_symbol`, `current_interval`,
 `signals`, `ai_dialogs`, `client`, `strategy_engine`, `strategy_registry`,
 `indicator_registry`.
 
-`open_ai_analysis` vérifie Ollama (installé, démarré, modèles disponibles) et
+`open_ai_analysis` vérifie Llama App (installé, démarré, modèles disponibles) et
 affiche une boîte de dialogue explicite sinon ; dans le cas nominal, elle ouvre
 une `AIAnalysisDialog` non modale et la conserve dans `ai_dialogs`.
 

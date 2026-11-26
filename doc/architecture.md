@@ -46,7 +46,7 @@ trading-matrix/
 │   ├── app.py                  # Création de QApplication + MainWindow
 │   ├── core/
 │   │   ├── config.py           # Constantes, palette, chemins, intervalles/périodes
-│   │   ├── ollama_client.py    # Statut Ollama, modèles, chat en streaming
+│   │   ├── llama_client.py     # Statut Llama App, modèles, chat en streaming
 │   │   └── signal_context.py   # Contexte de marché + prompt d'analyse IA
 │   ├── data/
 │   │   ├── openbb_client.py    # Chargement OHLCV (OpenBB → yfinance → démo)
@@ -80,7 +80,7 @@ trading-matrix/
 │   │   ├── markets_window.py   # Fenêtre « Marchés » (non modale)
 │   │   ├── markets_panel.py    # Panneau Marchés (indices, filtre, tri)
 │   │   ├── symbol_completer.py # Autocomplétion du champ Symbole
-│   │   ├── ai_analysis_dialog.py # Fenêtre d'analyse IA (Ollama, streaming)
+│   │   ├── ai_analysis_dialog.py # Fenêtre d'analyse IA (Llama App, streaming)
 │   │   └── styles.qss          # Thème sombre
 │   └── utils/helpers.py        # Helpers de conversion
 ├── tests/                      # Tests pytest (réseau simulé)

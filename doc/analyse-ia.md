@@ -1,60 +1,60 @@
-# Analyse IA des signaux (Ollama)
+# Analyse IA des signaux (Llama App)
 
 Chaque signal du tableau **Signaux détectés**, confirmé ou **En attente**,
 possède une colonne **IA** avec un bouton **Analyser IA**. Il ouvre une fenêtre
-séparée dans laquelle un modèle local (via [Ollama](https://ollama.com)) analyse
-le signal : structure de marché, confluence, risques, invalidation et gestion du
-risque.
+séparée dans laquelle un modèle local (via [Llama App](https://llama.app))
+analyse le signal : structure de marché, confluence, risques, invalidation et
+gestion du risque.
 
 | Heure | Sens | Statut | Setup | Entrée | SL | TP1 | TP2 | R:R | Conf. | Raisons | IA |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | ... | LONG | Confirmé | ... | ... | .. | ... | ... | 1.5 | 63 % | ... | [Analyser IA] |
 | ... | SHORT | En attente | ... | ... | .. | ... | ... | 2.0 | 55 % | ... | [Analyser IA] |
 
-## 1. Prérequis : Ollama
+## 1. Prérequis : Llama App
 
-L'analyse IA utilise **Ollama**, un serveur de modèles local. Aucune clé API ni
-compte n'est nécessaire et les données ne quittent pas la machine.
+L'analyse IA utilise **Llama App**, un serveur local basé sur llama.cpp. Aucune
+clé API ni compte n'est nécessaire et les données ne quittent pas la machine.
 
-1. Télécharger Ollama : <https://ollama.com/download>
-2. L'installer, puis vérifier que le service tourne :
+1. Télécharger Llama App : <https://llama.app/download>
+2. L'installer, puis vérifier que le serveur tourne :
 
    ```bash
-   ollama serve
+   llama serve
    ```
 
-   Sous Windows/macOS, l'application Ollama démarre généralement le service
-   automatiquement.
-3. Télécharger au moins un modèle :
+   Sous Windows/macOS, l'application Llama démarre généralement le serveur
+   automatiquement (barre des tâches / menu).
+3. Télécharger au moins un modèle, depuis l'application ou en le servant
+   directement :
 
    ```bash
-   ollama pull llama3.1
-   # ou un modèle plus léger :
-   ollama pull llama3.2:3b
+   llama serve -hf ggml-org/gemma-4-e4b-it-GGUF:Q4_0
    ```
 
 4. Vérifier que l'application détecte le modèle :
 
    ```bash
-   ollama list
+   curl http://127.0.0.1:9931/v1/models
    ```
 
-L'application interroge `http://127.0.0.1:11434/api/tags` pour lister les
-modèles. Pour utiliser un serveur distant, définir la variable
-d'environnement `OLLAMA_HOST` (par exemple `http://192.168.1.20:11434`).
+L'application interroge `http://127.0.0.1:9931/v1/models` pour lister les
+modèles. Pour utiliser un serveur distant, définir la variable d'environnement
+`LLAMA_HOST` (par exemple `http://192.168.1.20:9931`). Si le serveur a été
+lancé avec `--api-key`, définir aussi `LLAMA_API_KEY`.
 
 ## 2. Utilisation
 
 1. Charger des données et lancer une stratégie (**Analyser le graphique**).
 2. Dans le tableau des signaux, cliquer sur **Analyser IA** sur la ligne voulue
    (y compris une ligne dont le statut est **En attente**).
-3. L'application vérifie Ollama :
-   - **Ollama n'est pas installé** → une fenêtre indique qu'Ollama est absent et
-     donne les étapes d'installation.
-   - **Ollama est installé mais arrêté** → une fenêtre demande de lancer
-     `ollama serve`.
-   - **Aucun modèle installé** → une fenêtre indique la commande
-     `ollama pull ...`.
+3. L'application vérifie Llama App :
+   - **Llama App introuvable** → une fenêtre indique que l'application est
+     absente et donne les étapes d'installation.
+   - **Serveur Llama non démarré** → une fenêtre demande de lancer
+     `llama serve`.
+   - **Aucun modèle Llama** → une fenêtre indique comment installer un modèle
+     depuis l'application ou avec `llama serve -hf ...`.
 4. Si tout est prêt, la fenêtre d'analyse s'ouvre. Le modèle choisi est
    mémorisé, mais **aucune analyse ne démarre automatiquement** : cliquez sur
    **Analyser avec l'IA** (puis **Relancer l'analyse** pour une nouvelle
@@ -64,9 +64,9 @@ Dans la fenêtre d'analyse :
 
 | Élément | Rôle |
 | --- | --- |
-| **Modèle Ollama** | Choix du modèle ; le dernier choix est mémorisé pour les analyses suivantes |
+| **Modèle Llama** | Choix du modèle ; le dernier choix est mémorisé pour les analyses suivantes |
 | **Inclure les dernières actualités (OpenBB)** | Ajoute au prompt les actualités les plus récentes de l'actif. Le choix est mémorisé ; le chargement se fait en arrière-plan (repli `yfinance` si OpenBB ne répond pas) |
-| **Rafraîchir** | Rescanne les modèles installés (après un `ollama pull`) |
+| **Rafraîchir** | Rescanne les modèles disponibles (après installation d'un modèle) |
 | **Contexte envoyé à l'IA** | Texte exact transmis au modèle (signal, bougies, indicateurs) |
 | **Analyse de l'IA** | Réponse diffusée en direct, puis rendue en Markdown |
 | **Raisonnement du modèle** | Affiché si le modèle expose un raisonnement (*thinking*) |
@@ -122,7 +122,7 @@ Le prompt contient :
 > les traiter comme un contexte actuel, jamais comme une information connue au
 > moment du signal.
 
-Les données sont envoyées uniquement au serveur Ollama configuré (localhost par
+Les données sont envoyées uniquement au serveur Llama configuré (localhost par
 défaut). Les actualités sont, elles, récupérées auprès d'OpenBB / Yahoo Finance
 uniquement lorsque la case est cochée. Le prompt complet est toujours visible
 dans la fenêtre avant/après l'analyse.
@@ -140,15 +140,16 @@ Le prompt est construit dans `trading_matrix/core/signal_context.py` :
 Pour un prompt plus court (modèles avec petite fenêtre de contexte), réduire
 `candles` ou adapter `SYSTEM_PROMPT`.
 
-Le client Ollama (`trading_matrix/core/ollama_client.py`) expose :
+Le client Llama (`trading_matrix/core/llama_client.py`) expose :
 
 ```python
-from trading_matrix.core import ollama_client
+from trading_matrix.core import llama_client
 
-status = ollama_client.get_status()
+status = llama_client.get_status()
 status.installed, status.running, status.models
 
-for kind, text in ollama_client.chat_stream("llama3.1", messages):
+model = "ggml-org/gemma-4-e4b-it-GGUF:Q4_0"
+for kind, text in llama_client.chat_stream(model, messages):
     print(kind, text)   # kind = "content" ou "thinking"
 ```
 
@@ -156,11 +157,11 @@ for kind, text in ollama_client.chat_stream("llama3.1", messages):
 
 | Symptôme | Cause probable | Solution |
 | --- | --- | --- |
-| « Ollama introuvable » | Binaire absent du `PATH` | Installer Ollama, redémarrer l'application |
-| « Ollama n'est pas démarré » | Service arrêté | Lancer `ollama serve` (ou l'application Ollama) |
-| « Aucun modèle Ollama » | Aucun modèle téléchargé | `ollama pull llama3.1` puis **Rafraîchir** |
-| `Erreur Ollama (404) : model ... not found` | Modèle supprimé entre-temps | Rafraîchir et choisir un modèle existant |
-| Analyse très lente | Modèle volumineux / machine limitée | Choisir un modèle plus petit (`llama3.2:3b`, `qwen2.5:3b`) |
+| « Llama App introuvable » | Binaire absent du `PATH` | Installer Llama App, redémarrer l'application |
+| « Serveur Llama non démarré » | Serveur arrêté | Lancer `llama serve` (ou l'application Llama) |
+| « Aucun modèle Llama » | Aucun modèle installé | Installer un modèle puis **Rafraîchir** |
+| `Erreur Llama (404) : ...` | Modèle indisponible entre-temps | Rafraîchir et choisir un modèle existant |
+| Analyse très lente | Modèle volumineux / machine limitée | Choisir un modèle plus petit (`LiquidAI/LFM3-Omni-2B-GGUF`) |
 | Réponse vide | Modèle en échec ou contexte trop grand | Relancer avec un autre modèle, réduire `candles` |
 | Caractères bizarres dans la console | Encodage du terminal | Sans impact sur l'interface (UTF-8 utilisé dans l'UI) |
 

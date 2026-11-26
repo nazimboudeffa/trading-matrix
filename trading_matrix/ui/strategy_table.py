@@ -142,8 +142,8 @@ class SignalTable(QWidget):
             button.setObjectName("aiButton")
             button.setCursor(Qt.CursorShape.PointingHandCursor)
             button.setToolTip(
-                "Analyser ce signal avec un modèle Ollama local.\n"
-                "Ollama doit être installé et démarré."
+                "Analyser ce signal avec un modèle Llama local.\n"
+                "Llama App doit être installé et son serveur démarré."
             )
             button.clicked.connect(
                 lambda _checked=False, signal=sig: self.aiAnalysisRequested.emit(signal)

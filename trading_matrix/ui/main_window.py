@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QStatusBar,
 )
 
-from trading_matrix.core import ollama_client
+from trading_matrix.core import llama_client
 from trading_matrix.core.config import APP_NAME, WINDOW_HEIGHT, WINDOW_WIDTH
 from trading_matrix.data.openbb_client import OpenBBClient
 from trading_matrix.indicators.registry import IndicatorRegistry
@@ -166,39 +166,40 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------------ IA
     def open_ai_analysis(self, sig) -> None:
-        """Ouvre une fenêtre d'analyse IA pour le signal, après contrôle d'Ollama."""
+        """Ouvre une fenêtre d'analyse IA pour le signal, après contrôle de Llama App."""
         if self.current_df is None or len(self.current_df) == 0:
             QMessageBox.information(self, "Info", "Charger des données d'abord.")
             return
 
-        status = ollama_client.get_status()
+        status = llama_client.get_status()
         if not status.installed:
             QMessageBox.warning(
                 self,
-                "Ollama introuvable",
-                "Ollama n'est pas installé sur cet ordinateur.\n\n"
-                "L'analyse IA locale nécessite Ollama.\n"
-                "1. Téléchargez-le sur https://ollama.com/download\n"
-                "2. Installez-le, puis lancez un modèle : ollama pull llama3.1\n"
-                "3. Redémarrez l'application si Ollama n'est pas détecté.",
+                "Llama App introuvable",
+                "Llama App n'est pas installé sur cet ordinateur.\n\n"
+                "L'analyse IA locale nécessite Llama App.\n"
+                "1. Téléchargez-le sur https://llama.app/download\n"
+                "2. Installez un modèle depuis l'application ou lancez : "
+                "llama serve -hf ggml-org/gemma-4-e4b-it-GGUF:Q4_0\n"
+                "3. Redémarrez l'application si le serveur n'est pas détecté.",
             )
             return
         if not status.running:
             QMessageBox.warning(
                 self,
-                "Ollama n'est pas démarré",
-                "Ollama est installé mais son service ne répond pas.\n\n"
-                "Démarrez-le avec la commande : ollama serve\n"
-                "puis cliquez à nouveau sur « Analyser IA ».",
+                "Serveur Llama non démarré",
+                "Llama App est installé mais son serveur local ne répond pas.\n\n"
+                "Démarrez-le avec la commande : llama serve\n"
+                "(ou lancez l'application Llama), puis cliquez à nouveau sur « Analyser IA ».",
             )
             return
         if not status.models:
             QMessageBox.information(
                 self,
-                "Aucun modèle Ollama",
-                "Ollama fonctionne mais aucun modèle n'est installé.\n\n"
-                "Téléchargez un modèle, par exemple :\n"
-                "    ollama pull llama3.1\n"
+                "Aucun modèle Llama",
+                "Le serveur Llama répond mais aucun modèle n'est disponible.\n\n"
+                "Installez un modèle depuis l'application Llama ou avec :\n"
+                "    llama serve -hf ggml-org/gemma-4-e4b-it-GGUF:Q4_0\n"
                 "puis cliquez à nouveau sur « Analyser IA ».",
             )
             return
@@ -232,7 +233,7 @@ class MainWindow(QMainWindow):
             self.ai_dialogs.remove(dialog)
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        # Ferme proprement les analyses en cours (arrêt des threads Ollama).
+        # Ferme proprement les analyses en cours (arrêt des threads Llama).
         for dialog in list(self.ai_dialogs):
             dialog.close()
         self.markets_window.shutdown()

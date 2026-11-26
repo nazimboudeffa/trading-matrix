@@ -29,8 +29,8 @@ Un **visualiseur de trading desktop local**, extensible et pédagogique :
 
 1. **Cœur sans définitions** : le package `trading_matrix/` ne contient *aucun*
    indicateur ni stratégie en dur — seulement les moteurs et l'interface.
-2. **Local d'abord** : cache disque, instantanés embarqués, Ollama. Pas de
-   serveur, pas de compte, pas de clé API obligatoire.
+2. **Local d'abord** : cache disque, instantanés embarqués, Llama App. Pas de
+   serveur distant, pas de compte, pas de clé API obligatoire.
 3. **Interface en français**, thème sombre proche de TradingView.
 4. **Séparation UI / logique** : les calculs (indicateurs, stratégies) sont
    indépendants de Qt et testables sans interface.
@@ -50,7 +50,7 @@ Un **visualiseur de trading desktop local**, extensible et pédagogique :
 | Indicateurs | Tous dans `user_indicators/` (SMA, EMA, Bollinger, RSI, MACD + exemple), panneau unifié, paramètres auto-générés, éditeur intégré |
 | Stratégies | Moteur + `user_strategies/` (`pa_general`, `sma_crossover`, `ema_crossover`) |
 | Signaux | SL / TP1 / TP2 / TP3, R:R, score de confluence, **setups en attente**, tableau, navigation |
-| Analyse IA | Ollama local : statut, choix du modèle, fenêtre dédiée, streaming, **actualités OpenBB optionnelles** |
+| Analyse IA | Llama App local : statut, choix du modèle, fenêtre dédiée, streaming, **actualités OpenBB optionnelles** |
 | Qualité | 44 tests `pytest`, documentation complète dans `doc/` |
 
 ## 4. Feuille de route

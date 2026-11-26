@@ -1,4 +1,4 @@
-"""Fenêtre d'analyse IA d'un signal via Ollama."""
+"""Fenêtre d'analyse IA d'un signal via Llama App."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from trading_matrix.core import ollama_client
+from trading_matrix.core import llama_client
 from trading_matrix.core.signal_context import build_signal_prompt
 from trading_matrix.data.openbb_client import NewsItem, OpenBBClient
 from trading_matrix.strategies.base import Signal as TradeSignal
@@ -44,8 +44,8 @@ def _price(value: float | None) -> str:
     return f"{value:.2f}"
 
 
-class _OllamaWorker(QThread):
-    """Exécute la requête Ollama hors du thread UI."""
+class _LlamaWorker(QThread):
+    """Exécute la requête Llama hors du thread UI."""
 
     chunk = QtSignal(str, str)  # type ("content" | "thinking"), texte
     failed = QtSignal(str)
@@ -65,7 +65,7 @@ class _OllamaWorker(QThread):
 
     def run(self) -> None:
         try:
-            for kind, text in ollama_client.chat_stream(
+            for kind, text in llama_client.chat_stream(
                 self._model, self._messages, stop_event=self._stop
             ):
                 if self._stop.is_set():
@@ -108,7 +108,7 @@ class AIAnalysisDialog(QWidget):
         timeframe: str = "",
         strategy_name: str = "",
         strategy_description: str = "",
-        status: ollama_client.OllamaStatus | None = None,
+        status: llama_client.LlamaStatus | None = None,
         parent=None,
     ):
         super().__init__(parent, Qt.WindowType.Window)
@@ -119,7 +119,7 @@ class AIAnalysisDialog(QWidget):
         self.timeframe = timeframe or str(sig.meta.get("timeframe") or "")
         self.strategy_name = strategy_name or str(sig.meta.get("strategy_name") or "")
         self._strategy_description = strategy_description
-        self._status = status or ollama_client.get_status()
+        self._status = status or llama_client.get_status()
         self._prompt = build_signal_prompt(
             sig,
             df,
@@ -129,7 +129,7 @@ class AIAnalysisDialog(QWidget):
             strategy_description=strategy_description,
         )
 
-        self._worker: _OllamaWorker | None = None
+        self._worker: _LlamaWorker | None = None
         self._news_worker: _NewsWorker | None = None
         self._news_generation = 0
         self._news: list[NewsItem] = []
@@ -197,13 +197,13 @@ class AIAnalysisDialog(QWidget):
             layout.addWidget(condition_label)
 
         model_row = QHBoxLayout()
-        model_row.addWidget(QLabel("Modèle Ollama"))
+        model_row.addWidget(QLabel("Modèle Llama"))
         self.model_combo = QComboBox()
         self.model_combo.setMinimumWidth(240)
         self.model_combo.currentTextChanged.connect(self._on_model_changed)
         model_row.addWidget(self.model_combo, 1)
         self.btn_refresh = QPushButton("Rafraîchir")
-        self.btn_refresh.setToolTip("Rescanner les modèles installés dans Ollama")
+        self.btn_refresh.setToolTip("Rescanner les modèles disponibles dans Llama App")
         self.btn_refresh.clicked.connect(self._refresh_models)
         model_row.addWidget(self.btn_refresh)
         layout.addLayout(model_row)
@@ -299,7 +299,7 @@ class AIAnalysisDialog(QWidget):
         return font
 
     # ------------------------------------------------------------- modèles
-    def _populate_models(self, status: ollama_client.OllamaStatus) -> None:
+    def _populate_models(self, status: llama_client.LlamaStatus) -> None:
         previous = self.model_combo.currentText().strip()
         saved = str(QSettings(_SETTINGS_ORG, _SETTINGS_APP).value(_SETTINGS_MODEL_KEY, ""))
 
@@ -314,13 +314,14 @@ class AIAnalysisDialog(QWidget):
         self._update_start_button()
 
         if not status.running:
-            hint = "Ollama n'est pas démarré : lancez « ollama serve » puis rafraîchissez."
+            hint = "Serveur Llama injoignable : lancez « llama serve » puis rafraîchissez."
             if status.error:
                 hint += f" ({status.error})"
             self.models_hint.setText(hint)
         elif not status.models:
             self.models_hint.setText(
-                "Aucun modèle installé. Téléchargez-en un, par exemple : ollama pull llama3.1"
+                "Aucun modèle installé. Installez-en un depuis l'application Llama "
+                "ou avec : llama serve -hf ggml-org/gemma-4-e4b-it-GGUF:Q4_0"
             )
         else:
             self.models_hint.setText(
@@ -347,13 +348,13 @@ class AIAnalysisDialog(QWidget):
         self.btn_refresh.setEnabled(False)
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            status = ollama_client.get_status()
+            status = llama_client.get_status()
         finally:
             QApplication.restoreOverrideCursor()
             self.btn_refresh.setEnabled(True)
         self._status = status
         self._populate_models(status)
-        self._set_status("Liste des modèles actualisée." if status.running else "Ollama injoignable.")
+        self._set_status("Liste des modèles actualisée." if status.running else "Llama injoignable.")
 
     # ------------------------------------------------------------ actualités
     @staticmethod
@@ -460,7 +461,8 @@ class AIAnalysisDialog(QWidget):
         model = self.model_combo.currentText().strip()
         if not model:
             self._set_status(
-                "Aucun modèle disponible. Installez-en un avec : ollama pull llama3.1",
+                "Aucun modèle disponible. Installez-en un depuis l'application Llama "
+                "ou avec : llama serve -hf ggml-org/gemma-4-e4b-it-GGUF:Q4_0",
                 error=True,
             )
             return
@@ -482,7 +484,7 @@ class AIAnalysisDialog(QWidget):
         self.btn_stop.setEnabled(True)
         self._set_status(f"Analyse en cours avec « {model} »…")
 
-        self._worker = _OllamaWorker(model, self._prompt.messages, self)
+        self._worker = _LlamaWorker(model, self._prompt.messages, self)
         self._worker.chunk.connect(self._on_chunk)
         self._worker.failed.connect(self._on_failed)
         self._worker.finished.connect(self._on_worker_finished)

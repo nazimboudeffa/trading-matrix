@@ -12,7 +12,7 @@ Bienvenue dans la documentation du projet **Trading Matrix**, un visualiseur de 
 | [Indicateurs](indicateurs.md) | Indicateurs (tous dans `user_indicators/`) et création d'indicateurs |
 | [Stratégies](strategies.md) | Moteur de stratégies, API `BaseStrategy`, création de stratégies perso |
 | [Stratégie Price Action](strategie-price-action.md) | Fonctionnement détaillé de la stratégie générale |
-| [Analyse IA](analyse-ia.md) | Analyse des signaux avec Ollama : installation, fenêtre, prompt |
+| [Analyse IA](analyse-ia.md) | Analyse des signaux avec Llama App : installation, fenêtre, prompt |
 | [Référence API](api-reference.md) | Classes, fonctions et signatures principales |
 | [Dépannage](depannage.md) | Problèmes fréquents et solutions |
 | [Plan / Feuille de route](plan.md) | État du projet, priorités et feuille de route |

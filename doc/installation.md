@@ -7,7 +7,7 @@
 | Python | 3.11 ou supérieur (3.12 recommandé) |
 | Système | Windows, Linux ou macOS |
 | Connexion internet | Nécessaire pour OpenBB/yfinance (sinon données de démo) |
-| Ollama (optionnel) | Analyse IA locale des signaux — voir [Analyse IA](analyse-ia.md) |
+| Llama App (optionnel) | Analyse IA locale des signaux — voir [Analyse IA](analyse-ia.md) |
 
 > Le projet a été développé et testé sous Windows avec Python 3.12.
 
@@ -56,7 +56,7 @@ Contenu principal de `requirements.txt` :
 | `lxml` | Parsing des tableaux HTML (listes de marchés) |
 | `numpy` | Calculs numériques |
 | `ta` | Indicateurs techniques (fallback si `ta-lib` absent) |
-| `requests` | Client HTTP pour l'API locale Ollama |
+| `requests` | Client HTTP pour l'API locale Llama App |
 | `pyinstaller` | Génération d'exécutable (optionnel) |
 
 > `ta-lib` n'est pas obligatoire : le projet utilise `ta` et des implémentations
@@ -92,12 +92,13 @@ est affiché : l'interface reste entièrement utilisable.
 
 ## Analyse IA locale (optionnel)
 
-L'analyse IA des signaux s'appuie sur **Ollama**, qui n'est pas un paquet
+L'analyse IA des signaux s'appuie sur **Llama App**, qui n'est pas un paquet
 Python et n'est donc pas dans `requirements.txt`.
 
-1. Installer Ollama : <https://ollama.com/download>
-2. Vérifier le service : `ollama serve`
-3. Télécharger un modèle : `ollama pull llama3.1`
+1. Installer Llama App : <https://llama.app/download>
+2. Vérifier le serveur : `llama serve`
+3. Télécharger un modèle : `llama serve -hf ggml-org/gemma-4-e4b-it-GGUF:Q4_0`
+   (ou depuis l'application Llama)
 
 L'application détecte automatiquement le binaire et l'API locale. Aucune
 configuration supplémentaire n'est nécessaire. Voir

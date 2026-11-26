@@ -206,45 +206,49 @@ Le registre n'a pas été découvert. Appeler `registry.discover()` avant
 | Analyse longue | Réduire `lookback_zones`, la période, ou le nombre de stratégies |
 | Démarrage lent | OpenBB initialise ses extensions ; c'est normal au premier lancement |
 
-## Problèmes d'analyse IA (Ollama)
+## Problèmes d'analyse IA (Llama App)
 
-### « Ollama introuvable »
+### « Llama App introuvable »
 
-Le binaire `ollama` n'est pas trouvé et l'API locale ne répond pas.
+Le binaire `llama` n'est pas trouvé et l'API locale ne répond pas.
 
-- Installer Ollama : <https://ollama.com/download>
-- Vérifier que `ollama` est dans le `PATH` (rouvrir le terminal après
-  l'installation)
+- Installer Llama App : <https://llama.app/download>
+- Vérifier que `llama` est dans le `PATH` (rouvrir le terminal après
+  l'installation ; l'application installe aussi la ligne de commande)
 - Redémarrer l'application
 
-### « Ollama n'est pas démarré »
+### « Serveur Llama non démarré »
 
-Ollama est installé mais le service local ne répond pas :
-
-```bash
-ollama serve
-```
-
-Sous Windows/macOS, lancer aussi l'application Ollama. L'API doit répondre sur
-<http://127.0.0.1:11434/api/tags>.
-
-### « Aucun modèle Ollama »
+Llama App est installé mais le serveur local ne répond pas :
 
 ```bash
-ollama pull llama3.1
-ollama list
+llama serve
 ```
 
-Puis cliquer sur **Rafraîchir** dans la fenêtre d'analyse.
+Sous Windows/macOS, lancer aussi l'application Llama. L'API doit répondre sur
+<http://127.0.0.1:9931/v1/models>.
 
-### `Erreur Ollama (404) : model ... not found`
+### « Aucun modèle Llama »
 
-Le modèle sélectionné a été supprimé depuis l'ouverture de la fenêtre. Cliquer
-sur **Rafraîchir** et choisir un modèle présent dans `ollama list`.
+Installer un modèle depuis l'application Llama, ou le télécharger en le
+servant directement :
+
+```bash
+llama serve -hf ggml-org/gemma-4-e4b-it-GGUF:Q4_0
+```
+
+Puis cliquer sur **Rafraîchir** dans la fenêtre d'analyse. Les modèles en cache
+sont aussi listés par `llama serve -cl`.
+
+### `Erreur Llama (404) : ...`
+
+Le modèle sélectionné n'est plus disponible depuis l'ouverture de la fenêtre.
+Cliquer sur **Rafraîchir** et choisir un modèle présent dans
+<http://127.0.0.1:9931/v1/models>.
 
 ### L'analyse est très lente ou la réponse est vide
 
-- Choisir un modèle plus léger (`llama3.2:3b`, `qwen2.5:3b`)
+- Choisir un modèle plus léger (`LiquidAI/LFM3-Omni-2B-GGUF`, `gemma-4-e4b-it`)
 - Réduire le nombre de bougies du prompt (`candles` dans
   `trading_matrix/core/signal_context.py`)
 - Vérifier la mémoire disponible : un modèle 30B peut nécessiter beaucoup de RAM
@@ -255,7 +259,7 @@ sur **Rafraîchir** et choisir un modèle présent dans `ollama list`.
 
 Vérifier qu'un modèle est sélectionné dans la liste. Sinon, cliquer sur
 **Rafraîchir** puis sur **Analyser avec l'IA**. Vérifier aussi que le champ
-d'environnement `OLLAMA_HOST` ne pointe pas vers un serveur inaccessible.
+d'environnement `LLAMA_HOST` ne pointe pas vers un serveur inaccessible.
 
 ### Confusion entre signal et conseil financier
 

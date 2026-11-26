@@ -260,7 +260,7 @@ Chaque ligne correspond à un `Signal` :
 | R:R | Ratio risque/rendement calculé |
 | Conf. | Score de confluence (0-100) |
 | Raisons | Détails lisibles (structure, zone, pattern...) |
-| IA | Bouton **Analyser IA** : analyse le signal avec un modèle Ollama local |
+| IA | Bouton **Analyser IA** : analyse le signal avec un modèle Llama local |
 
 Le tableau est **triable** en cliquant sur les en-têtes.
 
@@ -289,10 +289,10 @@ sans réaction, ou disparaître au prochain calcul. Voir
 ### Analyse IA d'un signal
 
 Le bouton **Analyser IA** de chaque ligne ouvre une fenêtre séparée dans
-laquelle un modèle Ollama analyse le signal (structure, confluence, risques,
-gestion). L'application vérifie d'abord qu'Ollama est installé et démarré ; un
-message explicite s'affiche sinon. Le modèle se choisit dans la fenêtre et est
-mémorisé pour la prochaine analyse.
+laquelle un modèle Llama analyse le signal (structure, confluence, risques,
+gestion). L'application vérifie d'abord que Llama App est installé et que son
+serveur est démarré ; un message explicite s'affiche sinon. Le modèle se choisit
+dans la fenêtre et est mémorisé pour la prochaine analyse.
 
 Le contexte exact envoyé au modèle est visible, et l'analyse est diffusée en
 direct. Voir [Analyse IA](analyse-ia.md) pour l'installation et le détail du
@@ -345,4 +345,4 @@ Affiche :
 | Double-clic sur un signal | Centrer le graphique |
 | Double-clic sur un titre (Marchés) | Charger le graphique |
 | Clic sur un en-tête de colonne | Trier le tableau |
-| Clic sur **Analyser IA** | Analyser le signal avec Ollama |
+| Clic sur **Analyser IA** | Analyser le signal avec Llama App |

@@ -50,7 +50,7 @@ Application desktop Python : PySide6, pyqtgraph, données OpenBB/yfinance.
 | Graphiques et marqueurs de signaux | `trading_matrix/ui/chart_widget.py`, `trading_matrix/charts/markers.py` |
 | Interface utilisateur | `trading_matrix/ui/` |
 | Données, marchés et recherche de symboles | `trading_matrix/data/` |
-| Contexte des signaux et analyse Ollama | `trading_matrix/core/signal_context.py`, `trading_matrix/core/ollama_client.py` |
+| Contexte des signaux et analyse Llama App | `trading_matrix/core/signal_context.py`, `trading_matrix/core/llama_client.py` |
 
 La stratégie générale est désormais dans `user_strategies/price_action_general.py`,
 et non dans l'ancien `trading_matrix/strategies/price_action/general.py`.
