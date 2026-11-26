@@ -72,3 +72,4 @@ user_strategies/*.py
 !user_strategies/price_action_general.py
 !user_strategies/ema_crossover.py
 !user_strategies/sma_crossover.py
+!user_strategies/annual_extremes.py
